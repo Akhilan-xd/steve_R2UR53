@@ -34,7 +34,7 @@
             <collision>
                 <origin rpy="${collision_rpy}" xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="package://steve_simulation/robots/${neo_robot_name}/meshes/cabin.dae" scale="${model_scale}"/>
+                    <mesh filename="package://steve_simulation/robots/${neo_robot_name}/meshes/cabin.stl" scale="${model_scale}"/>
                 </geometry>
             </collision>
         </link>

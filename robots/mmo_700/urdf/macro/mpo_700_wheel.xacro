@@ -29,17 +29,10 @@
     <collision>
      <origin xyz="0 0 0" rpy="0 0 0" />
      <geometry>
-        <mesh filename="package://steve_simulation/robots/mmo_700/meshes/MPO-700-WHEEL.dae" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://steve_simulation/robots/mmo_700/meshes/MPO-700-WHEEL.stl" scale="0.001 0.001 0.001"/>
      </geometry>
     </collision>
    </link>
-
-     <gazebo reference="${name}_link">
-      <mu1 value="0.05"/>
-      <mu2 value="0.05"/>
-      <kp value="100000.0" />
-      <kd value="10.0" />
-      </gazebo>
   </xacro:macro>
 
 </robot>

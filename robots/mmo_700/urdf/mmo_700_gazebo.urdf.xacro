@@ -52,30 +52,28 @@
         visualize="false"
     />
 
-    <!--Wheels - Gazebo friction properties-->
-    <gazebo reference="mpo_700_wheel_front_left_link">
-      <mu1>0.05</mu1>
-      <mu2>0.05</mu2>
-      <kp>100000.0</kp>
-      <kd>10.0</kd>
-    </gazebo>
-    <gazebo reference="mpo_700_wheel_front_right_link">
-      <mu1>0.05</mu1>
-      <mu2>0.05</mu2>
-      <kp>100000.0</kp>
-      <kd>10.0</kd>
-    </gazebo>
-    <gazebo reference="mpo_700_wheel_back_left_link">
-      <mu1>0.05</mu1>
-      <mu2>0.05</mu2>
-      <kp>100000.0</kp>
-      <kd>10.0</kd>
-    </gazebo>
-    <gazebo reference="mpo_700_wheel_back_right_link">
-      <mu1>0.05</mu1>
-      <mu2>0.05</mu2>
-      <kp>100000.0</kp>
-      <kd>10.0</kd>
-    </gazebo>
+    <!-- Enough friction to hold station against mesh-contact drift, but well
+         below the mu that made teleop tip the base. slip lets planar_move slide. -->
+    <xacro:macro name="mpo_700_ground_contact" params="link">
+      <gazebo reference="${link}">
+        <mu1>0.2</mu1>
+        <mu2>0.2</mu2>
+        <slip1>0.2</slip1>
+        <slip2>0.2</slip2>
+        <kp>1e7</kp>
+        <kd>1e2</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>0.1</maxVel>
+      </gazebo>
+    </xacro:macro>
+    <xacro:mpo_700_ground_contact link="base_link"/>
+    <xacro:mpo_700_ground_contact link="mpo_700_wheel_front_left_link"/>
+    <xacro:mpo_700_ground_contact link="mpo_700_wheel_front_right_link"/>
+    <xacro:mpo_700_ground_contact link="mpo_700_wheel_back_left_link"/>
+    <xacro:mpo_700_ground_contact link="mpo_700_wheel_back_right_link"/>
+    <xacro:mpo_700_ground_contact link="mpo_700_caster_front_left_link"/>
+    <xacro:mpo_700_ground_contact link="mpo_700_caster_front_right_link"/>
+    <xacro:mpo_700_ground_contact link="mpo_700_caster_back_left_link"/>
+    <xacro:mpo_700_ground_contact link="mpo_700_caster_back_right_link"/>
 
 </robot>

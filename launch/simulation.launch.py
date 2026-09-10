@@ -6,6 +6,7 @@ import subprocess
 
 import launch
 import xacro
+import yaml
 from ament_index_python.packages import get_package_prefix, get_package_share_directory
 from launch import LaunchContext, LaunchDescription
 from launch.actions import (
@@ -262,6 +263,22 @@ def launch_setup(
     ).toxml()
     print("[INFO] URDF processing complete")
 
+    if robot_arm_type != "":
+        initial_positions_path = os.path.join(
+            get_package_share_directory("steve_simulation"),
+            "configs",
+            "ur_config",
+            "initial_joint_positions.yaml",
+        )
+        try:
+            with open(initial_positions_path, "r") as positions_file:
+                arm_home = yaml.safe_load(positions_file)
+            print(f"[INFO] Arm spawn (home) pose from {initial_positions_path}:")
+            for joint_name, joint_value in arm_home.items():
+                print(f"[INFO]   {joint_name}: {joint_value}")
+        except (OSError, yaml.YAMLError) as exc:
+            print(f"[WARN] Could not read arm home pose file: {exc}")
+
     # Spawning the robot
     # Using /usr/bin/python3 explicitly to avoid Anaconda conflicts
     spawn_entity = Node(
@@ -277,6 +294,8 @@ def launch_setup(
             "/robot_description",
             "-timeout",
             "300.0",
+            "-z",
+            "0.02",  # slight lift so wheel cylinders are not spawned in the floor
             "-Y",
             "3.14159",  # 180° rotation around Z-axis (pi radians)
         ],
@@ -301,6 +320,10 @@ def launch_setup(
         output="screen",
         # prefix = 'xterm -e',
         name="teleop",
+        parameters=[
+            {"speed": 0.3},
+            {"turn": 0.5},
+        ],
     )
 
     # RViz for visualization and joint control

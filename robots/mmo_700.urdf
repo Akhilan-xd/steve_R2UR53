@@ -833,7 +833,7 @@
                 </gazebo>
   <gazebo>
     <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
-      <parameters>/home/shrikar/steve_ros2_ws/install/steve_simulation/share/steve_simulation/configs/ur_config/ur5e/ur_controllers.yaml</parameters>
+      <parameters>package://steve_simulation/configs/ur_config/ur5e/ur_controllers.yaml</parameters>
       <robot_param>robot_description</robot_param>
       <robot_param_node>robot_state_publisher</robot_param_node>
       <hold_joints>true</hold_joints>
