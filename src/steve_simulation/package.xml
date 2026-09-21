@@ -3,8 +3,10 @@
 <package format="3">
   <name>steve_simulation</name>
   <version>1.0.3</version>
-  <description>ROS-2 Simulation packages for neobotix robots</description>
-  <maintainer email="nakhyeshrikar@icloud.com">ItsShriks</maintainer>
+  <description>Gazebo Classic simulation for the Steve mobile manipulator (Neobotix MMO-700 with UR5e)</description>
+  <maintainer email="akhilan.ashokan@smail.inf.h-brs.de">Akhilan Ashokan</maintainer>
+  <author email="nakhyeshrikar@icloud.com">Shrikar Nakhye</author>
+  <author email="padhupradheep@gmail.com">Pradheep Padmanabhan</author>
   <license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
 

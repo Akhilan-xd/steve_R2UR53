@@ -12,9 +12,9 @@ setup(
     ],
     install_requires=["setuptools"],
     zip_safe=True,
-    maintainer="pradheep padmanabhan",
-    maintainer_email="padhupradheep@gmail.com",
-    description="ROS-2 Simulation packages for neobotix robots",
+    maintainer="Akhilan Ashokan",
+    maintainer_email="akhilan.ashokan@smail.inf.h-brs.de",
+    description="Gazebo Classic simulation for the Steve mobile manipulator (Neobotix MMO-700 with UR5e)",
     license="MIT",
     tests_require=["pytest"],
     entry_points={
