@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<!-- Complete Pan-Tilt Tower with Dynamixel Motors and L515 Camera -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="pan_tilt_tower" params="parent_link use_gazebo">
+
+    <!-- Tower properties matching steve_description -->
+    <xacro:property name="tower_height" value="0.9"/>
+    <xacro:property name="profile_width" value="0.03"/>
+    <xacro:property name="mount_mass" value="1.0"/>
+
+    <material name="tower_grey">
+      <color rgba="0.7 0.7 0.7 1"/>
+    </material>
+
+    <!-- Fixed tower mount at base -->
+    <joint name="pan_tilt_tower_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="pan_tilt_tower_base"/>
+      <origin xyz="-0.15 0 1.1" rpy="0 0 0" />
+    </joint>
+
+    <!-- Tower vertical support pole -->
+    <link name="pan_tilt_tower_base">
+      <visual>
+        <geometry>
+          <box size="${profile_width} ${profile_width} ${tower_height}"/>
+        </geometry>
+        <material name="tower_grey"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="${profile_width} ${profile_width} ${tower_height}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="${mount_mass}"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.05"/>
+      </inertial>
+    </link>
+
+    <!-- Include Dynamixel pan-tilt mechanism -->
+    <xacro:include filename="$(find steve_simulation)/components/dynamixel/steve_pan_tilt.xacro"/>
+    <xacro:steve_pan_tilt parent="pan_tilt_tower_base" name="pan_tilt"/>
+
+    <!-- ROS2 Control for Pan-Tilt -->
+    <xacro:include filename="$(find steve_simulation)/components/pan_tilt/pan_tilt.ros2_control.xacro"/>
+    <xacro:pan_tilt_ros2_control name="pan_tilt"/>
+
+
+    <!-- Include L515 camera macro -->
+    <xacro:include filename="$(find steve_simulation)/components/cameras/l515_simplified.urdf.xacro"/>
+
+    <!-- L515 Camera mounted on pan bracket (follows both pan and tilt) -->
+    <xacro:sensor_l515_simplified
+      parent="pan_tilt_pan_bracket_link"
+      name="pan_tilt_camera"
+      use_gazebo="${use_gazebo}">
+      <origin xyz="0 0.04 0" rpy="${pi/2} ${pi/2} ${pi}"/>
+    </xacro:sensor_l515_simplified>
+
+    <!-- Gazebo materials -->
+    <xacro:if value="${use_gazebo}">
+      <gazebo reference="pan_tilt_tower_base">
+        <material>Gazebo/Grey</material>
+      </gazebo>
+      <!-- Dynamixel motor materials -->
+      <gazebo reference="pan_tilt_tilt_motor_base_link">
+        <material>Gazebo/Black</material>
+      </gazebo>
+      <gazebo reference="pan_tilt_pan_motor_base_link">
+        <material>Gazebo/Black</material>
+      </gazebo>
+      <!-- Bracket materials -->
+      <gazebo reference="pan_tilt_tilt_bracket_link">
+        <material>Gazebo/Grey</material>
+      </gazebo>
+      <gazebo reference="pan_tilt_pan_bracket_link">
+        <material>Gazebo/Grey</material>
+      </gazebo>
+    </xacro:if>
+
+  </xacro:macro>
+
+</robot>

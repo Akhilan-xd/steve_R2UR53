@@ -1,0 +1,22 @@
+# Colcon / ROS 2 workspace artifacts
+build/
+install/
+log/
+
+# Nested package build trees
+src/**/build/
+src/**/install/
+src/**/log/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Local-only files
+robot_name.txt
+.git-backups/
+
+# Workspace-level maps (package maps live under src/steve_simulation/maps)
+/maps/
