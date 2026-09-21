@@ -18,5 +18,5 @@ src/**/log/
 robot_name.txt
 .git-backups/
 
-# Workspace-level maps (package maps live under src/steve_simulation/maps)
-/maps/
+# Local map editor sources
+/maps/*.xcf
