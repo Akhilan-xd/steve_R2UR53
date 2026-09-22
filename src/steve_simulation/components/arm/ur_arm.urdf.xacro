@@ -21,6 +21,9 @@
             <xacro:arg name="sim_gazebo" default="$(arg use_gazebo)" />
             <xacro:arg name="simulation_controllers" default="$(find steve_simulation)/configs/ur_config/$(arg arm_type)/ur_controllers.yaml"/>
             <xacro:arg name="initial_positions_file" default="$(find steve_simulation)/configs/ur_config/initial_joint_positions.yaml"/>
+            <xacro:arg name="arm_tool" default="robotiq_gripper"/>
+            <xacro:arg name="include_wrist_camera" default="true"/>
+            <xacro:property name="arm_tool" value="$(arg arm_tool)"/>
 
             <!-- parse initial positions as a dictionary -->
             <xacro:property
@@ -60,7 +63,14 @@
                 </gazebo>
             </xacro:if>
 
-            <!-- include wrist camera mount (dummy end-effector with camera) -->
-            <xacro:include filename="$(find steve_simulation)/components/arm/wrist_camera_mount.urdf.xacro"/>
+            <!-- Robotiq 2F-85 gripper on the UR tool flange -->
+            <xacro:if value="${arm_tool == 'robotiq_gripper'}">
+                <xacro:include filename="$(find steve_simulation)/components/arm/robotiq_gripper.urdf.xacro"/>
+            </xacro:if>
+
+            <!-- Wrist D405 camera, mounted on tool0 (with or without gripper) -->
+            <xacro:if value="$(arg include_wrist_camera)">
+                <xacro:include filename="$(find steve_simulation)/components/arm/wrist_camera_mount.urdf.xacro"/>
+            </xacro:if>
 
 </robot>

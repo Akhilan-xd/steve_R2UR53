@@ -190,15 +190,18 @@ def launch_setup(
     pkg_share_path = os.path.join(get_package_prefix("steve_simulation"), "share")
     workspace_install_share = os.path.join(os.getcwd(), "install", "share")
 
-    robotiq_share = os.path.join(os.getcwd(), "install", "robotiq_description", "share")
     steve_simulation_models = os.path.join(
         get_package_share_directory("steve_simulation"), "models"
     )
 
     # Build GAZEBO_MODEL_PATH with only necessary directories
-    model_paths = [workspace_install_share]
-    if os.path.exists(robotiq_share):
-        model_paths.append(robotiq_share)
+    model_paths = [workspace_install_share, pkg_share_path]
+    try:
+        robotiq_share = os.path.dirname(get_package_share_directory("robotiq_description"))
+        if os.path.exists(robotiq_share):
+            model_paths.append(robotiq_share)
+    except Exception as exc:
+        print(f"[WARN] robotiq_description not found on the ROS 2 index: {exc}")
     # Add AWS RoboMaker models for small house world
     if os.path.exists(steve_simulation_models):
         model_paths.append(steve_simulation_models)
@@ -249,6 +252,7 @@ def launch_setup(
     xacro_args = {
         "use_gazebo": "true",
         "arm_type": robot_arm_type,
+        "arm_tool": "robotiq_gripper",
         "use_docking_adapter": use_docking_adapter,
         "include_wrist_camera": include_wrist_camera,
         "include_depth_camera": include_depth_camera,
@@ -302,6 +306,27 @@ def launch_setup(
         output="screen",
     )
 
+    # Gazebo / ros2_control only publish actuated joints. The Robotiq fingers are
+    # mimic joints, so they never appear on /joint_states. RViz follows TF from
+    # robot_state_publisher and will hide those links unless we fill them in.
+    complete_joint_states_topic = "/joint_states_complete"
+    missing_joint_state_publisher = Node(
+        package="joint_state_publisher",
+        executable="joint_state_publisher",
+        name="missing_joint_state_publisher",
+        output="screen",
+        parameters=[
+            {
+                "use_sim_time": use_sim_time,
+                "robot_description": robot_description_file,
+                "source_list": ["/joint_states"],
+                "rate": 50.0,
+                "use_mimic_tags": True,
+            }
+        ],
+        remappings=[("joint_states", complete_joint_states_topic)],
+    )
+
     # Start the robot state publisher node
     start_robot_state_publisher_cmd = Node(
         package="robot_state_publisher",
@@ -311,6 +336,7 @@ def launch_setup(
         parameters=[
             {"use_sim_time": use_sim_time, "robot_description": robot_description_file}
         ],
+        remappings=[("joint_states", complete_joint_states_topic)],
     )
 
     # Starting the teleop node
@@ -372,6 +398,8 @@ def launch_setup(
     print("\n[INFO] Launching nodes...")
     print("[INFO] - Robot State Publisher")
     launch_actions.append(start_robot_state_publisher_cmd)
+    print("[INFO] - Joint State Publisher (fills gripper mimic joints for RViz)")
+    launch_actions.append(missing_joint_state_publisher)
 
     # Collect controller spawners to delay them
     controller_spawners = []

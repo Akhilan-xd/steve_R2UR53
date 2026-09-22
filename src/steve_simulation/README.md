@@ -1,20 +1,26 @@
 # steve_simulation
 
-**Gazebo Simulation Package** for the Steve Butler robot.
+Gazebo Classic simulation package for **Steve**, an MMO-700 mobile manipulator with a UR5e arm.
 
-This package provides high-fidelity simulation environments and robot descriptions to test navigation, manipulation, and perception algorithms before deploying them to the real hardware.
+This package provides robot descriptions, worlds, and launch files so navigation, manipulation, and perception can be tested before deploying to hardware.
 
-## How to Run the Simulation
+The workspace-level overview lives in the [repository README](../../README.md).
 
-### 1. Basic Launch
-Launch the default simulation environment with the robot spawned:
+## Maintainer
+
+- **Akhilan Ashokan** — [akhilan.ashokan@smail.inf.h-brs.de](mailto:akhilan.ashokan@smail.inf.h-brs.de)
+- Hochschule Bonn-Rhein-Sieg (H-BRS)
+- GitHub: [Akhilan-xd/steve_R2UR53](https://github.com/Akhilan-xd/steve_R2UR53)
+
+## How to run the simulation
+
+### 1. Basic launch
 
 ```bash
 ros2 launch steve_simulation simulation.launch.py
 ```
 
-### 2. Launch with Custom Configuration
-You can customize the robot and environment using launch arguments:
+### 2. Custom robot and world
 
 ```bash
 ros2 launch steve_simulation simulation.launch.py \
@@ -23,52 +29,48 @@ ros2 launch steve_simulation simulation.launch.py \
     include_pan_tilt:=true
 ```
 
-### 3. Localization & SLAM in Simulation
-To test the full navigation stack, use the launch files provided in `steve_navigation`.
+### 3. Mapping, localization, and Nav2
 
-**Simulate Localization (AMCL):**
+Use the launch files in `steve_navigation`.
+
+**Mapping (SLAM):**
+
 ```bash
-ros2 launch steve_navigation localization.launch.py use_sim_time:=true map:=/path/to/your/map.yaml
+ros2 launch steve_simulation simulation.launch.py launch_map_server:=false use_rviz:=false
+ros2 launch steve_navigation mapping.launch.py use_sim_time:=true
 ```
 
-**Simulate SLAM (Mapping):**
-```bash
-ros2 launch steve_navigation slam.launch.py use_sim_time:=true
-```
+**Localization and navigation (AMCL + Nav2):**
 
----
+```bash
+ros2 launch steve_navigation localization_navigation.launch.py \
+  use_sim_time:=true \
+  map:=/path/to/your/map.yaml
+```
 
 ## Troubleshooting
 
-### Models Not Loading ("White Box" Robot)
-If the robot appears as a white box or collada meshes are missing:
-1. Ensure you have cloned all submodules: `git submodule update --init --recursive`
-2. Source the workspace: `source install/setup.bash`
-3. Ensure the `GAZEBO_MODEL_PATH` includes your workspace:
-   ```bash
-   export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$(pwd)/src/steve_simulation/models
-   ```
+### Models not loading ("white box" robot)
 
-### "Missing model.config" Errors
-This is a common warning in Gazebo when it tries to fetch models from the online database. It usually doesn't affect the simulation if your local models are correct. To suppress it, you can disable the online model database in `~/.gazebo/gui.ini`.
+1. Source the workspace: `source install/setup.bash`
+2. Make sure `GAZEBO_MODEL_PATH` includes this package's models:
 
-### RealSense Camera Not Publishing
-The simulation uses a plugin to simulate the RealSense L515.
-- Check if the plugin is loaded: `ros2 topic list | grep camera`
-- If topics are missing, ensure `steve_essentials` dependencies are installed.
+```bash
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$(pwd)/src/steve_simulation/models
+```
 
----
+### "Missing model.config" errors
 
-## Visuals
-![Gazebo Simulation](images/gazebo.png)
-![RViz Visualization](images/rviz.png)
+Gazebo often prints this when it tries the online model database. It is usually harmless if the local models are present.
 
----
+### RealSense camera not publishing
 
-**Note**: This simulation environment has been migrated to support modern Gazebo features while maintaining compatibility with classic workflows.
+The simulation uses a plugin for the wrist / depth cameras.
 
----
+- Check topics: `ros2 topic list | grep camera`
 
-### Acknowledgements
-- **Rohit Menon** - For mentorship and technical guidance on Neobotix platforms.
-- **Prof. Maren Bennewitz** - Head of the Humanoid Robots Lab, University of Bonn.
+## Acknowledgements
+
+- **Rohit Menon** — mentorship and technical guidance on Neobotix platforms
+- **Prof. Maren Bennewitz** — Head of the Humanoid Robots Lab, University of Bonn
+- Original Neobotix simulation bringup by **Pradheep Padmanabhan**, with later work by **Shrikar Nakhye (ItsShriks)**
