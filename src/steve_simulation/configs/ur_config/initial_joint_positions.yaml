@@ -1,7 +1,7 @@
-# Compact UR5e home / stow pose used when the robot is spawned in Gazebo.
-# These values are read by components/arm/ur_arm.urdf.xacro and written into
-# ros2_control <param name="initial_value"> so gazebo_ros2_control can set the
-# joints before physics starts pushing the arm.
+# Compact UR5e home / stow pose used when the robot is spawned.
+# Gazebo reads these via components/arm/ur_arm.urdf.xacro into ros2_control
+# <param name="initial_value">. RViz is seeded with the same values through
+# joint_state_publisher zeros in simulation.launch.py.
 #
 # Geometry this pose is built around:
 #   - Arm is mounted on the cabinet, yawed -90 deg

@@ -267,6 +267,9 @@ def launch_setup(
     ).toxml()
     print("[INFO] URDF processing complete")
 
+    # Same home joints Gazebo uses (ros2_control initial_value). RViz otherwise
+    # starts every revolute joint at 0 until /joint_states arrives.
+    jsp_zeros = {}
     if robot_arm_type != "":
         initial_positions_path = os.path.join(
             get_package_share_directory("steve_simulation"),
@@ -276,12 +279,17 @@ def launch_setup(
         )
         try:
             with open(initial_positions_path, "r") as positions_file:
-                arm_home = yaml.safe_load(positions_file)
+                arm_home = yaml.safe_load(positions_file) or {}
             print(f"[INFO] Arm spawn (home) pose from {initial_positions_path}:")
             for joint_name, joint_value in arm_home.items():
                 print(f"[INFO]   {joint_name}: {joint_value}")
+                jsp_zeros[f"{robot_arm_type}{joint_name}"] = float(joint_value)
         except (OSError, yaml.YAMLError) as exc:
             print(f"[WARN] Could not read arm home pose file: {exc}")
+
+    if include_pan_tilt == "true":
+        jsp_zeros["pan_tilt_pan_motor_joint"] = 0.0
+        jsp_zeros["pan_tilt_tilt_motor_joint"] = -0.2
 
     # Spawning the robot
     # Using /usr/bin/python3 explicitly to avoid Anaconda conflicts
@@ -310,20 +318,22 @@ def launch_setup(
     # mimic joints, so they never appear on /joint_states. RViz follows TF from
     # robot_state_publisher and will hide those links unless we fill them in.
     complete_joint_states_topic = "/joint_states_complete"
+    jsp_parameters = {
+        "use_sim_time": use_sim_time,
+        "robot_description": robot_description_file,
+        "source_list": ["/joint_states"],
+        "rate": 50,
+        "use_mimic_tags": True,
+    }
+    for joint_name, joint_value in jsp_zeros.items():
+        jsp_parameters[f"zeros.{joint_name}"] = joint_value
+
     missing_joint_state_publisher = Node(
         package="joint_state_publisher",
         executable="joint_state_publisher",
         name="missing_joint_state_publisher",
         output="screen",
-        parameters=[
-            {
-                "use_sim_time": use_sim_time,
-                "robot_description": robot_description_file,
-                "source_list": ["/joint_states"],
-                "rate": 50.0,
-                "use_mimic_tags": True,
-            }
-        ],
+        parameters=[jsp_parameters],
         remappings=[("joint_states", complete_joint_states_topic)],
     )
 
