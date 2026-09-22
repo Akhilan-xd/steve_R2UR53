@@ -7,6 +7,7 @@ log/
 src/**/build/
 src/**/install/
 src/**/log/
+*.png
 
 # Editor / OS
 .vscode/
@@ -17,6 +18,7 @@ src/**/log/
 # Local-only files
 robot_name.txt
 .git-backups/
+commands.txt
 
 # Local map editor sources
 /maps/*.xcf
