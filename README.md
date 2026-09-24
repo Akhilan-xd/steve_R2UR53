@@ -33,7 +33,8 @@ steve_ws/
 ├── maps/                      # Local occupancy maps used for Nav2 (e.g. my_house)
 ├── src/
 │   ├── steve_simulation/      # Gazebo simulation, robot description, worlds
-│   └── steve_navigation/      # Nav2 mapping, AMCL localization, path planning
+│   ├── steve_navigation/      # Nav2 mapping, AMCL localization, path planning
+│   └── steve_manipulation/    # MoveIt 2 arm/gripper planning and pick helpers
 └── README.md
 ```
 
@@ -88,6 +89,50 @@ What it does:
 - Localizes on a saved map with **AMCL**
 - Plans and follows paths with **Nav2** (`controller_server`, `planner_server`, `bt_navigator`, …)
 - Sends a 2D pose goal from RViz or from `navigate_to_pose.py`
+
+### `steve_manipulation`
+
+MoveIt 2 bringup for the UR5e and Robotiq gripper.
+
+```text
+src/steve_manipulation/
+├── launch/
+│   ├── manipulation.launch.py  # Optional sim + cube + move_group + RViz
+│   ├── move_group.launch.py    # MoveIt planning server
+│   └── moveit_rviz.launch.py   # MotionPlanning RViz
+├── config/                     # SRDF, IK, OMPL, controller mapping
+├── models/                     # Pick stand and cube spawned for the demo
+└── scripts/
+    ├── pick_object.py          # Named poses and a scripted pick
+    └── gripper_command.py      # Open / close the 2F-85
+```
+
+What it does:
+
+- Starts **move_group** against the same `robot_description` Gazebo uses
+- Plans collision-aware UR5e trajectories and executes them on `joint_trajectory_controller`
+- Opens and closes the gripper through `robotiq_gripper_controller`
+- Optionally spawns a stand and red cube in front of the robot for a first pick
+
+Install MoveIt 2 once (`sudo apt install ros-humble-moveit`), then:
+
+```bash
+ros2 launch steve_manipulation manipulation.launch.py
+```
+
+If Gazebo is already running:
+
+```bash
+ros2 launch steve_manipulation manipulation.launch.py launch_simulation:=false
+```
+
+Move the arm:
+
+```bash
+ros2 run steve_manipulation pick_object.py --named ready
+ros2 run steve_manipulation gripper_command.py open
+ros2 run steve_manipulation pick_object.py --pick
+```
 
 ## Build
 
@@ -178,3 +223,4 @@ The simulation and navigation packages started from Neobotix ROS 2 bringup (`neo
 
 - `steve_simulation` — see `src/steve_simulation/LICENSE`
 - `steve_navigation` — Apache-2.0
+- `steve_manipulation` — Apache-2.0

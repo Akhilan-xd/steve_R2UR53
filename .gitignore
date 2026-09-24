@@ -7,7 +7,7 @@ log/
 src/**/build/
 src/**/install/
 src/**/log/
-*.png
+src/steve_simulation/**/*.png  
 
 # Editor / OS
 .vscode/
