@@ -1,0 +1,630 @@
+<?xml version="1.0" ?>
+<!-- Semantic description for Steve (MMO-700 + UR5e + Robotiq 2F-85).
+     The URDF already has the meshes; this file tells MoveIt which joints
+     belong to which planning group, named poses, and which link pairs
+     should be ignored during collision checking. -->
+<robot name="mmo_700">
+
+  <!-- 6-DOF arm. Tip is a TCP slightly beyond the gripper palm so pose
+       goals describe the grasp point, not the UR tool flange. -->
+  <group name="ur_manipulator">
+    <chain base_link="ur5ebase_link" tip_link="gripper_tcp"/>
+  </group>
+
+  <!-- Only the driven knuckle. Mimic joints are marked passive below. -->
+  <group name="gripper">
+    <joint name="robotiq_85_left_knuckle_joint"/>
+  </group>
+
+  <group name="ur_manipulator_gripper">
+    <group name="ur_manipulator"/>
+    <group name="gripper"/>
+  </group>
+
+  <end_effector name="robotiq_2f_85" parent_link="ur5etool0" group="gripper" parent_group="ur_manipulator"/>
+
+  <!-- Parked mobile base: treat world->base as fixed while we pick. -->
+  <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="base_link"/>
+
+  <!-- Spawn / stow pose from steve_simulation initial_joint_positions.yaml -->
+  <group_state name="home" group="ur_manipulator">
+    <joint name="ur5eshoulder_pan_joint" value="0.0"/>
+    <joint name="ur5eshoulder_lift_joint" value="-1.5708"/>
+    <joint name="ur5eelbow_joint" value="2.7"/>
+    <joint name="ur5ewrist_1_joint" value="-1.2"/>
+    <joint name="ur5ewrist_2_joint" value="0.0"/>
+    <joint name="ur5ewrist_3_joint" value="0.0"/>
+  </group_state>
+
+  <!-- Slightly unfolded, ready to reach forward of the cabinet. -->
+  <group_state name="ready" group="ur_manipulator">
+    <joint name="ur5eshoulder_pan_joint" value="0.0"/>
+    <joint name="ur5eshoulder_lift_joint" value="-1.2"/>
+    <joint name="ur5eelbow_joint" value="1.9"/>
+    <joint name="ur5ewrist_1_joint" value="-1.57"/>
+    <joint name="ur5ewrist_2_joint" value="1.57"/>
+    <joint name="ur5ewrist_3_joint" value="0.0"/>
+  </group_state>
+
+  <group_state name="open" group="gripper">
+    <joint name="robotiq_85_left_knuckle_joint" value="0.0"/>
+  </group_state>
+  <group_state name="closed" group="gripper">
+    <joint name="robotiq_85_left_knuckle_joint" value="0.79"/>
+  </group_state>
+
+  <passive_joint name="robotiq_85_right_knuckle_joint"/>
+  <passive_joint name="robotiq_85_left_inner_knuckle_joint"/>
+  <passive_joint name="robotiq_85_right_inner_knuckle_joint"/>
+  <passive_joint name="robotiq_85_left_finger_tip_joint"/>
+  <passive_joint name="robotiq_85_right_finger_tip_joint"/>
+  <passive_joint name="pan_tilt_pan_motor_joint"/>
+  <passive_joint name="pan_tilt_tilt_motor_joint"/>
+
+  <disable_collisions link1="base_footprint" link2="base_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="cabinet_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="lidar_1_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="lidar_2_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="mpo_700_caster_back_left_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="mpo_700_caster_back_right_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="mpo_700_caster_front_left_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="mpo_700_caster_front_right_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="base_footprint" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="base_footprint" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="base_footprint" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="base_footprint" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="cabinet_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="lidar_1_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="lidar_2_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="base_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="cabinet_link" link2="lidar_1_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="lidar_2_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="cabinet_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="cabinet_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="cabinet_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="cabinet_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="gripper_tcp" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="robotiq_85_base_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="robotiq_85_left_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="robotiq_85_left_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="robotiq_85_left_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="robotiq_85_left_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="robotiq_85_right_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_mount_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="robotiq_85_base_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="robotiq_85_left_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="robotiq_85_left_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="robotiq_85_left_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="robotiq_85_left_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="robotiq_85_right_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="lidar_1_link" link2="lidar_2_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="lidar_1_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="lidar_1_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="lidar_1_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="lidar_1_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="lidar_2_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="lidar_2_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="lidar_2_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="lidar_2_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="lidar_2_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_back_left_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_back_right_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_front_left_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_caster_front_right_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_back_left_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_back_right_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_front_left_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_camera_color_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_camera_depth_optical_frame" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_camera_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_pan_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_pan_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_pan_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_tilt_bracket_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_tilt_motor_base_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_tilt_motor_link" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="pan_tilt_tower_base" reason="Never"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="ur5ebase" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="mpo_700_wheel_front_right_link" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_color_optical_frame" link2="pan_tilt_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_color_optical_frame" link2="pan_tilt_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_color_optical_frame" link2="pan_tilt_pan_bracket_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_color_optical_frame" link2="pan_tilt_pan_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_color_optical_frame" link2="pan_tilt_pan_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_color_optical_frame" link2="pan_tilt_tilt_bracket_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_color_optical_frame" link2="pan_tilt_tilt_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_color_optical_frame" link2="pan_tilt_tilt_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_color_optical_frame" link2="pan_tilt_tower_base" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_depth_optical_frame" link2="pan_tilt_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_depth_optical_frame" link2="pan_tilt_pan_bracket_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_depth_optical_frame" link2="pan_tilt_pan_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_depth_optical_frame" link2="pan_tilt_pan_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_depth_optical_frame" link2="pan_tilt_tilt_bracket_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_depth_optical_frame" link2="pan_tilt_tilt_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_depth_optical_frame" link2="pan_tilt_tilt_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_depth_optical_frame" link2="pan_tilt_tower_base" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_link" link2="pan_tilt_pan_bracket_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_link" link2="pan_tilt_pan_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_link" link2="pan_tilt_pan_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_link" link2="pan_tilt_tilt_bracket_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_link" link2="pan_tilt_tilt_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_link" link2="pan_tilt_tilt_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_camera_link" link2="pan_tilt_tower_base" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_bracket_link" link2="pan_tilt_pan_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_bracket_link" link2="pan_tilt_pan_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_bracket_link" link2="pan_tilt_tilt_bracket_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_bracket_link" link2="pan_tilt_tilt_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_bracket_link" link2="pan_tilt_tilt_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_bracket_link" link2="pan_tilt_tower_base" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_motor_base_link" link2="pan_tilt_pan_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_motor_base_link" link2="pan_tilt_tilt_bracket_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_motor_base_link" link2="pan_tilt_tilt_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_motor_base_link" link2="pan_tilt_tilt_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_motor_base_link" link2="pan_tilt_tower_base" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_motor_link" link2="pan_tilt_tilt_bracket_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_motor_link" link2="pan_tilt_tilt_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_motor_link" link2="pan_tilt_tilt_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_pan_motor_link" link2="pan_tilt_tower_base" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_tilt_bracket_link" link2="pan_tilt_tilt_motor_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_tilt_bracket_link" link2="pan_tilt_tilt_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_tilt_bracket_link" link2="pan_tilt_tower_base" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_tilt_motor_base_link" link2="pan_tilt_tilt_motor_link" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_tilt_motor_base_link" link2="pan_tilt_tower_base" reason="Adjacent"/>
+  <disable_collisions link1="pan_tilt_tilt_motor_link" link2="pan_tilt_tower_base" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_left_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_left_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_left_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_left_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_right_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_base_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_left_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_left_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_left_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_right_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_left_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_left_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_right_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_left_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_right_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="robotiq_85_right_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_left_knuckle_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="ur5eflange" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="robotiq_85_right_knuckle_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="ur5ebase" link2="ur5ebase_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5ebase" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="ur5ebase" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ebase_link" link2="ur5ebase_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="ur5ebase_link" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ebase_link_inertia" link2="ur5eft_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ebase_link_inertia" link2="ur5eshoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5eflange" link2="ur5etool0" reason="Adjacent"/>
+  <disable_collisions link1="ur5eflange" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5eflange" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5eflange" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5eflange" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5eflange" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5eflange" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5eflange" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5eflange" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="ur5eforearm_link" link2="ur5eupper_arm_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5eforearm_link" link2="ur5ewrist_1_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5eforearm_link" link2="ur5ewrist_2_link" reason="Never"/>
+  <disable_collisions link1="ur5eft_frame" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5eft_frame" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5eft_frame" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5eft_frame" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5eft_frame" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5eft_frame" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5eft_frame" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="ur5eshoulder_link" link2="ur5eupper_arm_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5etool0" link2="ur5ewrist_1_link" reason="Never"/>
+  <disable_collisions link1="ur5etool0" link2="ur5ewrist_2_link" reason="Never"/>
+  <disable_collisions link1="ur5etool0" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5etool0" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5etool0" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5etool0" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5etool0" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5etool0" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5etool0" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_1_link" link2="ur5ewrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_1_link" link2="ur5ewrist_3_link" reason="Never"/>
+  <disable_collisions link1="ur5ewrist_2_link" link2="ur5ewrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_2_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_2_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_2_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_2_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_2_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_2_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_2_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_3_link" link2="ur_to_robotiq_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_3_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_3_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_3_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_3_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_3_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="ur5ewrist_3_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="ur_to_robotiq_link" link2="wrist_camera_color_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur_to_robotiq_link" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur_to_robotiq_link" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur_to_robotiq_link" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="ur_to_robotiq_link" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="ur_to_robotiq_link" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_color_frame" link2="wrist_camera_color_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_color_frame" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_color_frame" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_color_frame" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_color_frame" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_color_optical_frame" link2="wrist_camera_depth_frame" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_color_optical_frame" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_color_optical_frame" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_color_optical_frame" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_depth_frame" link2="wrist_camera_depth_optical_frame" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_depth_frame" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_depth_frame" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_depth_optical_frame" link2="wrist_camera_link" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_depth_optical_frame" link2="wrist_d405_mount" reason="Adjacent"/>
+  <disable_collisions link1="wrist_camera_link" link2="wrist_d405_mount" reason="Adjacent"/>
+</robot>

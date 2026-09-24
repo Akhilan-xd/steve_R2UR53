@@ -1,0 +1,10 @@
+# Tells MoveItConfigsBuilder where Steve's URDF and SRDF live.
+# Without this file the builder warns that it cannot infer them from
+# steve_manipulation, because the URDF is in steve_simulation.
+moveit_setup_assistant_config:
+  URDF:
+    package: steve_simulation
+    relative_path: robots/mmo_700/mmo_700.urdf.xacro
+    xacro_args: "use_gazebo:=true arm_type:=ur5e arm_tool:=robotiq_gripper include_wrist_camera:=true include_pan_tilt:=true include_depth_camera:=false use_docking_adapter:=False"
+  SRDF:
+    relative_path: config/mmo_700.srdf

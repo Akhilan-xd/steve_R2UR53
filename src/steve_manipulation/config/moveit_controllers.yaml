@@ -1,0 +1,33 @@
+# How MoveIt talks to ros2_control. Names must match the controllers that
+# simulation.launch.py already spawns (and the gripper spawner we add).
+trajectory_execution:
+  allowed_execution_duration_scaling: 2.0
+  allowed_goal_duration_margin: 1.0
+  allowed_start_tolerance: 0.2
+  trajectory_duration_monitoring: false
+
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names:
+    - joint_trajectory_controller
+    - robotiq_gripper_controller
+
+  joint_trajectory_controller:
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - ur5eshoulder_pan_joint
+      - ur5eshoulder_lift_joint
+      - ur5eelbow_joint
+      - ur5ewrist_1_joint
+      - ur5ewrist_2_joint
+      - ur5ewrist_3_joint
+
+  robotiq_gripper_controller:
+    action_ns: gripper_cmd
+    type: GripperCommand
+    default: false
+    joints:
+      - robotiq_85_left_knuckle_joint
