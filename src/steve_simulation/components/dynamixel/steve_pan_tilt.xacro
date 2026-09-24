@@ -6,7 +6,7 @@
 
   <xacro:arg name="grasp_link_offset" default="0.11"/>
 
-+  <xacro:macro name="steve_pan_tilt" params="parent name">
+  <xacro:macro name="steve_pan_tilt" params="parent name">
 
     <!-- Pan motor -->
     <xacro:dynamixel_motor_XL-430 name="${name}_tilt_motor" parent="${parent}" motor_direction="-1" position_offset="0.065">

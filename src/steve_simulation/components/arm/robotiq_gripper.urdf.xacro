@@ -14,11 +14,9 @@
       rotation="${pi/2}"
       />
 
-  <!-- 2F-85 kinematics and meshes. ros2_control is omitted because the
-       upstream sim_gazebo flag targets gz_ros2_control (Ignition), not
-       Gazebo Classic used by this workspace. Finger joints are still in
-       the URDF as revolute/mimic; simulation.launch.py fills them in for
-       robot_state_publisher so RViz can show the fingers. -->
+  <!-- 2F-85 kinematics and meshes. Upstream ros2_control is omitted because
+       its sim_gazebo flag loads gz_ros2_control (Ignition). Classic Gazebo
+       hardware is added below as gazebo_ros2_control/GazeboSystem. -->
   <xacro:include filename="$(find robotiq_description)/urdf/robotiq_2f_85_macro.urdf.xacro"/>
   <xacro:robotiq_gripper
       name="robotiq_gripper"
@@ -28,7 +26,65 @@
     <origin xyz="0 0 0" rpy="0 0 -${pi / 2}"/>
   </xacro:robotiq_gripper>
 
-  <!-- Gazebo Classic appearance and keep the fingers from sagging. -->
+  <!-- Grasp frame used as the MoveIt tip. 0.148 m is about the 2F-85 palm-to-pad distance. -->
+  <link name="gripper_tcp"/>
+  <joint name="gripper_tcp_joint" type="fixed">
+    <parent link="robotiq_85_base_link"/>
+    <child link="gripper_tcp"/>
+    <origin xyz="0 0 0.148" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Gazebo Classic hardware. robotiq_description's sim_gazebo flag loads
+       gz_ros2_control (Ignition), which this workspace does not use. -->
+  <ros2_control name="robotiq_gripper" type="system">
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+    <joint name="robotiq_85_left_knuckle_joint">
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="robotiq_85_right_knuckle_joint">
+      <param name="mimic">robotiq_85_left_knuckle_joint</param>
+      <param name="multiplier">-1</param>
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="robotiq_85_left_inner_knuckle_joint">
+      <param name="mimic">robotiq_85_left_knuckle_joint</param>
+      <param name="multiplier">1</param>
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="robotiq_85_right_inner_knuckle_joint">
+      <param name="mimic">robotiq_85_left_knuckle_joint</param>
+      <param name="multiplier">-1</param>
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="robotiq_85_left_finger_tip_joint">
+      <param name="mimic">robotiq_85_left_knuckle_joint</param>
+      <param name="multiplier">-1</param>
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="robotiq_85_right_finger_tip_joint">
+      <param name="mimic">robotiq_85_left_knuckle_joint</param>
+      <param name="multiplier">1</param>
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <!-- Gazebo Classic appearance. Gravity is off so idle fingers do not sag. -->
   <xacro:if value="$(arg use_gazebo)">
     <xacro:macro name="robotiq_gazebo_link" params="link">
       <gazebo reference="${link}">
@@ -47,22 +103,6 @@
     <xacro:robotiq_gazebo_link link="robotiq_85_right_inner_knuckle_link"/>
     <xacro:robotiq_gazebo_link link="robotiq_85_left_finger_tip_link"/>
     <xacro:robotiq_gazebo_link link="robotiq_85_right_finger_tip_link"/>
-
-    <xacro:macro name="robotiq_hold_joint" params="joint">
-      <gazebo reference="${joint}">
-        <implicitSpringDamper>true</implicitSpringDamper>
-        <springStiffness>10000</springStiffness>
-        <springReference>0.0</springReference>
-        <dissipation>1.0</dissipation>
-      </gazebo>
-    </xacro:macro>
-
-    <xacro:robotiq_hold_joint joint="robotiq_85_left_knuckle_joint"/>
-    <xacro:robotiq_hold_joint joint="robotiq_85_right_knuckle_joint"/>
-    <xacro:robotiq_hold_joint joint="robotiq_85_left_inner_knuckle_joint"/>
-    <xacro:robotiq_hold_joint joint="robotiq_85_right_inner_knuckle_joint"/>
-    <xacro:robotiq_hold_joint joint="robotiq_85_left_finger_tip_joint"/>
-    <xacro:robotiq_hold_joint joint="robotiq_85_right_finger_tip_joint"/>
   </xacro:if>
 
 </robot>

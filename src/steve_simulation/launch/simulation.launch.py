@@ -317,11 +317,28 @@ def launch_setup(
     # Gazebo / ros2_control only publish actuated joints. The Robotiq fingers are
     # mimic joints, so they never appear on /joint_states. RViz follows TF from
     # robot_state_publisher and will hide those links unless we fill them in.
+    #
+    # joint_state_publisher's subscription is reliable, and the broadcaster is
+    # best-effort, so feed it a reliable copy or MoveIt stays at the spawn pose.
     complete_joint_states_topic = "/joint_states_complete"
+    joint_state_relay = Node(
+        package=None,
+        executable="/usr/bin/python3",
+        arguments=[
+            os.path.join(
+                get_package_share_directory("steve_simulation"),
+                "launch",
+                "relay_joint_states.py",
+            )
+        ],
+        name="joint_state_relay",
+        output="screen",
+        parameters=[{"use_sim_time": use_sim_time}],
+    )
     jsp_parameters = {
         "use_sim_time": use_sim_time,
         "robot_description": robot_description_file,
-        "source_list": ["/joint_states"],
+        "source_list": ["/joint_states_hw"],
         "rate": 50,
         "use_mimic_tags": True,
     }
@@ -395,6 +412,12 @@ def launch_setup(
         arguments=["pan_tilt_controller", "-c", "/controller_manager"],
     )
 
+    robotiq_gripper_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["robotiq_gripper_controller", "-c", "/controller_manager"],
+    )
+
     # See Issue: https://github.com/ros2/rclpy/issues/1287
     # Cannot delete the newly create file. The user has to delete it on his own
     # Refer documentation for more info
@@ -408,6 +431,8 @@ def launch_setup(
     print("\n[INFO] Launching nodes...")
     print("[INFO] - Robot State Publisher")
     launch_actions.append(start_robot_state_publisher_cmd)
+    print("[INFO] - Joint State Relay (best-effort /joint_states -> reliable /joint_states_hw)")
+    launch_actions.append(joint_state_relay)
     print("[INFO] - Joint State Publisher (fills gripper mimic joints for RViz)")
     launch_actions.append(missing_joint_state_publisher)
 
@@ -418,6 +443,8 @@ def launch_setup(
         print("[INFO] - Joint Trajectory Controller (delayed 2s)")
         controller_spawners.append(joint_state_broadcaster_spawner)
         controller_spawners.append(initial_joint_controller_spawner_stopped)
+        print("[INFO] - Robotiq Gripper Controller (delayed 2s)")
+        controller_spawners.append(robotiq_gripper_controller_spawner)
 
     if include_pan_tilt == "true":
         print("[INFO] - Pan-Tilt Controller (delayed 2s)")
