@@ -1,7 +1,9 @@
 controller_manager:
   ros__parameters:
 
-    update_rate: 100 # Hz
+    # Match Gazebo's 1 ms step. A slower manager lets gravity move the arm
+    # between position updates, which shows up as a shake at the gripper.
+    update_rate: 1000 # Hz
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -167,18 +169,3 @@ robotiq_gripper_controller:
     stall_velocity_threshold: 0.01
     stall_timeout: 0.5
 
-gazebo_ros2_control:
-  ros__parameters:
-    pid_gains:
-      ur5eshoulder_pan_joint: {p: 5000.0, i: 100.0, d: 200.0}
-      ur5eshoulder_lift_joint: {p: 50000.0, i: 500.0, d: 1000.0}
-      ur5eelbow_joint: {p: 30000.0, i: 300.0, d: 500.0}
-      ur5ewrist_1_joint: {p: 5000.0, i: 50.0, d: 100.0}
-      ur5ewrist_2_joint: {p: 5000.0, i: 50.0, d: 100.0}
-      ur5ewrist_3_joint: {p: 2000.0, i: 20.0, d: 50.0}
-      robotiq_85_left_knuckle_joint: {p: 40.0, i: 0.1, d: 1.0}
-      robotiq_85_right_knuckle_joint: {p: 40.0, i: 0.1, d: 1.0}
-      robotiq_85_left_inner_knuckle_joint: {p: 40.0, i: 0.1, d: 1.0}
-      robotiq_85_right_inner_knuckle_joint: {p: 40.0, i: 0.1, d: 1.0}
-      robotiq_85_left_finger_tip_joint: {p: 40.0, i: 0.1, d: 1.0}
-      robotiq_85_right_finger_tip_joint: {p: 40.0, i: 0.1, d: 1.0}
