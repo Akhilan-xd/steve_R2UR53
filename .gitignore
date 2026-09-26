@@ -2,12 +2,13 @@
 build/
 install/
 log/
+src/robotiq_description/
 
 # Nested package build trees
 src/**/build/
 src/**/install/
 src/**/log/
-src/steve_simulation/**/*.png  
+src/steve_simulation/*.png  
 
 # Editor / OS
 .vscode/

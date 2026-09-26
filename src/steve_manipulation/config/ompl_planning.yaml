@@ -36,6 +36,9 @@ planner_configs:
 
 ur_manipulator:
   default_planner_config: RRTConnectkConfigDefault
+  # Subdivide until each joint moves a tiny fraction of its range between
+  # checks. A coarser step lets the forearm chord through the pick stand.
+  longest_valid_segment_fraction: 0.001
   planner_configs:
     - RRTConnectkConfigDefault
     - RRTkConfigDefault
