@@ -6,10 +6,10 @@ shows geometry that lives in move_group's planning scene. This node adds the
 same boxes there.
 
 The cube is visible but allowed to collide, so the gripper can close on it.
-The stand stays as a real obstacle so the arm will not plan through it.
-Its collision box is wider than the Gazebo model so a sampled trajectory
-cannot clip the physical stand between checks. The top stays at 0.80 m,
-under the cube.
+The stand and the pan-tilt camera tower stay real obstacles, so the arm
+will not plan through either of them. Both boxes are wider than the
+geometry Gazebo draws, so a sampled trajectory cannot clip the physical
+part between checks. The stand top stays at 0.80 m, under the cube.
 """
 
 import math
@@ -25,13 +25,22 @@ from shape_msgs.msg import SolidPrimitive
 from std_msgs.msg import ColorRGBA
 
 
-# Gazebo model is 0.25 x 0.25 x 0.80. The extra 3 cm on each side is keep-out
+# Gazebo model is 0.25 x 0.25 x 0.80. The extra margin on each side is keep-out
 # for the arm; height is unchanged so the top stays at the cube.
-STAND_MARGIN_XY = 0.03
+STAND_MARGIN_XY = 0.05
 STAND_SIZE = (0.25 + 2.0 * STAND_MARGIN_XY, 0.25 + 2.0 * STAND_MARGIN_XY, 0.8)
 CUBE_SIZE = (0.04, 0.04, 0.04)
 STAND_COLOR = (0.35, 0.35, 0.38, 1.0)
 CUBE_COLOR = (0.85, 0.15, 0.10, 1.0)
+
+# Same keep-out as pan_tilt_tower.urdf.xacro, expressed in base_link.
+# Publishing it as a world object makes the obstacle visible in RViz and
+# checks the arm against it even when self-collision meshes are thin.
+TOWER_CENTER = (-0.15, 0.0, 1.1)
+TOWER_SIZE = (0.09, 0.09, 0.9)
+HEAD_CENTER = (-0.15, 0.0, 1.1 + 0.55)
+HEAD_SIZE = (0.18, 0.18, 0.30)
+TOWER_COLOR = (0.25, 0.45, 0.70, 0.45)
 
 
 def as_bool(value, default=True) -> bool:
@@ -99,6 +108,19 @@ class PickScenePublisher(Node):
     def build_scene(self) -> PlanningScene:
         scene = PlanningScene()
         scene.is_diff = True
+        # Tower is fixed on the robot, so it lives in base_link, not Gazebo world.
+        scene.world.collision_objects.append(
+            box_object("pan_tilt_tower", "base_link", TOWER_CENTER, TOWER_SIZE)
+        )
+        scene.world.collision_objects.append(
+            box_object("pan_tilt_head", "base_link", HEAD_CENTER, HEAD_SIZE)
+        )
+        scene.object_colors.append(object_color("pan_tilt_tower", TOWER_COLOR))
+        scene.object_colors.append(object_color("pan_tilt_head", TOWER_COLOR))
+        # Do not send allowed_collision_matrix.entry_names here. A scene diff
+        # replaces the whole matrix, which would drop the SRDF and leave the
+        # arm in self-collision. The tower's own links are outside the arm
+        # group, so their overlap with these boxes is not checked.
         if self.spawn_stand:
             # SDF visual/collision origin is at the box center (z = 0.4 m).
             scene.world.collision_objects.append(
@@ -133,7 +155,7 @@ class PickScenePublisher(Node):
 
         scene = self.build_scene()
         if not scene.world.collision_objects:
-            self.get_logger().warn("Neither stand nor cube enabled; nothing to publish")
+            self.get_logger().warn("No collision objects to publish")
             return True
 
         request = ApplyPlanningScene.Request()

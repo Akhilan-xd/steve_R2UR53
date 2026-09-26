@@ -8,6 +8,13 @@
     <xacro:property name="tower_height" value="0.9"/>
     <xacro:property name="profile_width" value="0.03"/>
     <xacro:property name="mount_mass" value="1.0"/>
+    <!-- Collision is wider than the 30 mm extrusion so a sampled arm
+         trajectory cannot chord through the pole or the camera head.
+         Keep these sizes in sync with publish_pick_scene.py. -->
+    <xacro:property name="tower_keepout_xy" value="0.09"/>
+    <xacro:property name="head_keepout_xy" value="0.18"/>
+    <xacro:property name="head_keepout_z" value="0.30"/>
+    <xacro:property name="head_center_z" value="0.55"/>
 
     <material name="tower_grey">
       <color rgba="0.7 0.7 0.7 1"/>
@@ -30,7 +37,14 @@
       </visual>
       <collision>
         <geometry>
-          <box size="${profile_width} ${profile_width} ${tower_height}"/>
+          <box size="${tower_keepout_xy} ${tower_keepout_xy} ${tower_height}"/>
+        </geometry>
+      </collision>
+      <!-- Motors, brackets, and L515 sit above the pole. One box covers that cluster. -->
+      <collision>
+        <origin xyz="0 0 ${head_center_z}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${head_keepout_xy} ${head_keepout_xy} ${head_keepout_z}"/>
         </geometry>
       </collision>
       <inertial>
