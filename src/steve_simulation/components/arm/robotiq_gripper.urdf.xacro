@@ -35,7 +35,14 @@
   </joint>
 
   <!-- Gazebo Classic hardware. robotiq_description's sim_gazebo flag loads
-       gz_ros2_control (Ignition), which this workspace does not use. -->
+       gz_ros2_control (Ignition), which this workspace does not use.
+       gazebo_ros2_control 0.4 does not read URDF <mimic> tags. Each follower
+       has to be listed here with a mimic param, or the right finger, inner
+       knuckles, and finger tips stay free revolute joints in Gazebo.
+       The gripper controller still commands only the left knuckle. This
+       plugin copies that position onto the followers (with the multiplier)
+       and exports their command interfaces as *_mimic so nothing else
+       claims them. -->
   <ros2_control name="robotiq_gripper" type="system">
     <hardware>
       <plugin>gazebo_ros2_control/GazeboSystem</plugin>

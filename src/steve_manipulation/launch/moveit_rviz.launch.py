@@ -20,7 +20,7 @@ def launch_setup(context: LaunchContext, use_sim_time, rviz_config):
         package="rviz2",
         executable="rviz2",
         name="rviz2",
-        output="log",
+        output="screen",
         arguments=["-d", rviz_config],
         parameters=[
             moveit_config.robot_description,

@@ -23,3 +23,7 @@ commands.txt
 
 # Local map editor sources
 /maps/*.xcf
+
+# Python bytecode
+__pycache__/
+*.pyc

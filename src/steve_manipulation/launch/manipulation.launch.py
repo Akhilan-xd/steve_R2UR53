@@ -5,6 +5,7 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    OpaqueFunction,
     TimerAction,
 )
 from launch.conditions import IfCondition
@@ -54,7 +55,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(manip_dir, "launch", "moveit_rviz.launch.py")
         ),
-        condition=IfCondition(use_rviz),
         launch_arguments={
             "use_sim_time": use_sim_time,
             "spawn_pick_scene": spawn_pick_scene,
@@ -63,6 +63,16 @@ def generate_launch_description():
             "pick_scene_z": cube_z,
         }.items(),
     )
+
+    # Read use_rviz before the simulation include. That include sets
+    # use_rviz to false for Gazebo's own window, and the value stays in
+    # this launch context afterwards. A condition inside TimerAction is
+    # also dropped, so the decision has to be made here, up front.
+    def start_moveit(context):
+        actions = [move_group]
+        if IfCondition(use_rviz).evaluate(context):
+            actions.append(rviz)
+        return [TimerAction(period=5.0, actions=actions)]
 
     spawn_stand = Node(
         package=None,
@@ -107,7 +117,6 @@ def generate_launch_description():
     # Gazebo needs a few seconds before spawn_entity will succeed when we
     # start simulation from this same launch file.
     delayed_scene = TimerAction(period=8.0, actions=[spawn_stand, spawn_cube])
-    delayed_moveit = TimerAction(period=5.0, actions=[move_group, rviz])
 
     return LaunchDescription(
         [
@@ -146,8 +155,8 @@ def generate_launch_description():
                 default_value="0.82",
                 description="Cube world z (stand top is 0.80 m)",
             ),
+            OpaqueFunction(function=start_moveit),
             simulation,
-            delayed_moveit,
             delayed_scene,
         ]
     )

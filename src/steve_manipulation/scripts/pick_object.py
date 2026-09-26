@@ -18,6 +18,7 @@ Teach a new ready pose from RViz (Plan + Execute first, then):
 """
 
 import argparse
+import math
 import re
 import sys
 import time
@@ -74,19 +75,38 @@ NAMED_POSES = {
         "ur5ewrist_2_joint": 0.0,
         "ur5ewrist_3_joint": 0.0,
     },
+    # Same physical pose as shoulder_lift=4.7123 / wrist_1=5.3232, folded onto
+    # the turn the arm actually spawns on. The +2π copies force a full
+    # rotation through the cabinet, which the planner cannot solve.
     "ready": {
-        "ur5eshoulder_pan_joint": 0.0,
-        "ur5eshoulder_lift_joint": -1.2,
-        "ur5eelbow_joint": 1.9,
-        "ur5ewrist_1_joint": -1.57,
+        "ur5eshoulder_pan_joint": 1.57,
+        "ur5eshoulder_lift_joint": -1.5709,
+        "ur5eelbow_joint": 2.530,
+        "ur5ewrist_1_joint": -0.960,
         "ur5ewrist_2_joint": 1.57,
         "ur5ewrist_3_joint": 0.0,
     },
 }
 
+# URDF revolute limits. Elbow is ±π; the other arm joints are ±2π.
+JOINT_BOUNDS = {
+    "ur5eshoulder_pan_joint": (-6.2832, 6.2832),
+    "ur5eshoulder_lift_joint": (-6.2832, 6.2832),
+    "ur5eelbow_joint": (-3.1416, 3.1416),
+    "ur5ewrist_1_joint": (-6.2832, 6.2832),
+    "ur5ewrist_2_joint": (-6.2832, 6.2832),
+    "ur5ewrist_3_joint": (-6.2832, 6.2832),
+}
+
 ARM_JOINTS = list(NAMED_POSES["home"].keys())
 GRIPPER_OPEN = 0.0
-GRIPPER_CLOSED = 0.79
+# 0.8 rad is fully shut (0 mm). A 40 mm cube meets the pads near 0.42 rad;
+# 0.55 pinches it without driving the command through the cube to 0.79.
+GRIPPER_CLOSED = 0.55
+# Knuckle speed while closing. The position controller jumps to whatever
+# setpoint it is given, so the client has to walk the setpoint itself.
+GRIPPER_CLOSE_SPEED = 0.12  # rad/s, about 4.5 s from open to the grasp
+GRIPPER_OPEN_SPEED = 0.4
 EE_LINK = "gripper_tcp"
 GROUP = "ur_manipulator"
 CUBE_ID = "pick_cube"
@@ -103,6 +123,33 @@ GRIPPER_TOUCH_LINKS = [
     "robotiq_85_right_finger_tip_link",
     "robotiq_85_right_inner_knuckle_link",
 ]
+
+
+def wrap_near(value: float, reference: float, lower: float, upper: float) -> float:
+    """Pick the 2π copy of value closest to reference that stays inside limits."""
+    two_pi = 2.0 * math.pi
+    k = round((reference - value) / two_pi)
+    best = None
+    best_dist = None
+    for offset in range(k - 3, k + 4):
+        candidate = value + offset * two_pi
+        if candidate < lower - 1e-4 or candidate > upper + 1e-4:
+            continue
+        dist = abs(candidate - reference)
+        if best_dist is None or dist < best_dist:
+            best = candidate
+            best_dist = dist
+    if best is None:
+        return min(max(value, lower), upper)
+    return best
+
+
+def wrap_pose(joints: dict, reference: dict) -> dict:
+    wrapped = {}
+    for name in ARM_JOINTS:
+        lower, upper = JOINT_BOUNDS[name]
+        wrapped[name] = round(wrap_near(float(joints[name]), float(reference[name]), lower, upper), 4)
+    return wrapped
 
 
 def format_joint_dict(joints: dict) -> dict:
@@ -152,6 +199,7 @@ def read_arm_joints(node, timeout=5.0) -> dict:
 
 def save_ready_pose(joints: dict) -> None:
     """Write the captured ready pose into pick_object.py and mmo_700.srdf."""
+    joints = wrap_pose(joints, NAMED_POSES["home"])
     script_path = Path(__file__).resolve()
     script = script_path.read_text()
     script, n_py = re.subn(
@@ -225,10 +273,16 @@ class SteveArm:
         error = result.error_code.val
         if error != MoveItErrorCodes.SUCCESS:
             name = MOVEIT_ERRORS.get(error, "UNKNOWN")
-            self.node.get_logger().error(
-                f"MoveGroup failed with {name} ({error}). "
-                "CONTROL_FAILED usually means Gazebo lagged the planned path."
-            )
+            if error == MoveItErrorCodes.CONTROL_FAILED:
+                hint = " Gazebo lagged the planned path."
+            elif error == MoveItErrorCodes.FAILURE:
+                hint = (
+                    " The planner found no collision-free path. "
+                    "A joint target a full turn from the current pose does this."
+                )
+            else:
+                hint = ""
+            self.node.get_logger().error(f"MoveGroup failed with {name} ({error}).{hint}")
             return False
         self.node.get_logger().info("Motion succeeded")
         return True
@@ -254,10 +308,18 @@ class SteveArm:
         if name not in NAMED_POSES:
             raise ValueError(f"Unknown pose '{name}'. Try: {list(NAMED_POSES)}")
         self.node.get_logger().info(f"Planning to named pose '{name}'")
+        try:
+            current = read_arm_joints(self.node, timeout=2.0)
+        except RuntimeError:
+            current = NAMED_POSES["home"]
+        target = wrap_pose(NAMED_POSES[name], current)
+        self.node.get_logger().info(
+            "Joint target: " + ", ".join(f"{joint}={value:.3f}" for joint, value in target.items())
+        )
         req = self._base_request()
         constraints = Constraints()
         constraints.name = name
-        for joint, value in NAMED_POSES[name].items():
+        for joint, value in target.items():
             jc = JointConstraint()
             jc.joint_name = joint
             jc.position = value
@@ -302,7 +364,7 @@ class SteveArm:
         req.goal_constraints.append(constraints)
         return self._send_move(req)
 
-    def cartesian_to(self, pose: PoseStamped, step=0.01) -> bool:
+    def cartesian_to(self, pose: PoseStamped, step=0.005) -> bool:
         if not self.cartesian.wait_for_service(timeout_sec=5.0):
             self.node.get_logger().warn("compute_cartesian_path missing; using pose goal")
             return self.move_pose(pose)
@@ -315,15 +377,19 @@ class SteveArm:
         request.waypoints.append(pose.pose)
         request.max_step = step
         request.jump_threshold = 0.0
+        # Every waypoint, including the arm links, is checked against the
+        # planning scene. pick_stand is a hard obstacle; only a full path is
+        # executed. A short path means the straight line hits the stand.
         request.avoid_collisions = True
 
         future = self.cartesian.call_async(request)
         rclpy.spin_until_future_complete(self.node, future)
         response = future.result()
-        if response is None or response.fraction < 0.9:
+        if response is None or response.fraction < 0.999:
             frac = 0.0 if response is None else response.fraction
             self.node.get_logger().warn(
-                f"Cartesian path only covered {frac:.2f}; falling back to pose goal"
+                f"Cartesian path only covered {frac:.2f} without hitting the stand; "
+                "falling back to a collision-checked joint-space plan"
             )
             return self.move_pose(pose)
 
@@ -349,10 +415,27 @@ class SteveArm:
             return False
         return True
 
-    def set_gripper(self, position: float, effort: float = 20.0) -> bool:
-        if not self.gripper.server_is_ready():
-            self.node.get_logger().warn("Skipping gripper command (server missing)")
-            return False
+    def _knuckle_position(self, timeout=1.0) -> float:
+        holder = {"pos": None}
+
+        def callback(msg: JointState):
+            if "robotiq_85_left_knuckle_joint" not in msg.name:
+                return
+            index = msg.name.index("robotiq_85_left_knuckle_joint")
+            holder["pos"] = float(msg.position[index])
+
+        subs = [
+            self.node.create_subscription(JointState, "/joint_states", callback, 10),
+            self.node.create_subscription(JointState, "/joint_states_complete", callback, 10),
+        ]
+        end = time.monotonic() + timeout
+        while holder["pos"] is None and time.monotonic() < end and rclpy.ok():
+            rclpy.spin_once(self.node, timeout_sec=0.05)
+        for sub in subs:
+            self.node.destroy_subscription(sub)
+        return 0.0 if holder["pos"] is None else holder["pos"]
+
+    def _gripper_goal(self, position: float, effort: float, wait: bool) -> bool:
         goal = GripperCommand.Goal()
         goal.command.position = position
         goal.command.max_effort = effort
@@ -362,8 +445,49 @@ class SteveArm:
         if handle is None or not handle.accepted:
             self.node.get_logger().error("Gripper goal rejected")
             return False
+        if not wait:
+            return True
         result_future = handle.get_result_async()
         rclpy.spin_until_future_complete(self.node, result_future)
+        return True
+
+    def _pace(self, seconds: float):
+        end = time.monotonic() + seconds
+        while time.monotonic() < end and rclpy.ok():
+            rclpy.spin_once(self.node, timeout_sec=0.05)
+
+    def set_gripper(self, position: float, effort: float = 8.0, speed: float = GRIPPER_CLOSE_SPEED) -> bool:
+        """Walk the knuckle setpoint to `position`.
+
+        GripperActionController writes the goal position straight to the
+        hardware, so one command from 0 to 0.79 slams the fingers shut.
+        """
+        if not self.gripper.server_is_ready():
+            self.node.get_logger().warn("Skipping gripper command (server missing)")
+            return False
+
+        current = self._knuckle_position()
+        distance = position - current
+        if abs(distance) < 0.01 or speed <= 0.0:
+            return self._gripper_goal(position, effort, wait=True)
+
+        step = 0.02 if distance > 0.0 else -0.02
+        waypoints = []
+        cursor = current
+        while (step > 0.0 and cursor + step < position) or (step < 0.0 and cursor + step > position):
+            cursor += step
+            waypoints.append(cursor)
+        waypoints.append(position)
+        dt = abs(step) / speed
+        self.node.get_logger().info(
+            f"Gripper {current:.2f} -> {position:.2f} rad at {speed:.2f} rad/s"
+        )
+        for index, waypoint in enumerate(waypoints):
+            last = index == len(waypoints) - 1
+            if not self._gripper_goal(waypoint, effort, wait=last):
+                return False
+            if not last:
+                self._pace(dt)
         return True
 
     def attach_cube(self) -> bool:
@@ -416,7 +540,7 @@ def make_pose(frame, x, y, z, qx, qy, qz, qw, stamp) -> PoseStamped:
     pose.header.stamp = stamp
     pose.pose.position.x = x
     pose.pose.position.y = y
-    pose.pose.position.z = z
+    pose.pose.position.z = (z+0.03)
     pose.pose.orientation.x = qx
     pose.pose.orientation.y = qy
     pose.pose.orientation.z = qz
@@ -443,7 +567,7 @@ def run_pick(arm: SteveArm, args) -> int:
 
     steps = [
         ("named ready", lambda: arm.move_named("ready")),
-        ("open gripper", lambda: arm.set_gripper(GRIPPER_OPEN)),
+        ("open gripper", lambda: arm.set_gripper(GRIPPER_OPEN, speed=GRIPPER_OPEN_SPEED)),
         ("pregrasp", lambda: arm.move_pose(pregrasp)),
         ("approach", lambda: arm.cartesian_to(grasp)),
         ("close gripper", lambda: arm.set_gripper(GRIPPER_CLOSED)),

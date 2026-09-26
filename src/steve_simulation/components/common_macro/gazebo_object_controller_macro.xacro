@@ -19,8 +19,8 @@
     
                 <!-- Set odom publish rate -->
                 <odometryRate>${odom_update_rate}</odometryRate>
-    
-                <!-- Set control loop update rate -->
+
+                <update_rate>${controller_update_rate}</update_rate>
                 <publish_rate>${controller_update_rate}</publish_rate>
     
                 <!-- Set if odom required -->

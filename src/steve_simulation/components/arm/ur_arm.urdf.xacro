@@ -24,6 +24,12 @@
             <xacro:arg name="arm_tool" default="robotiq_gripper"/>
             <xacro:arg name="include_wrist_camera" default="true"/>
             <xacro:property name="arm_tool" value="$(arg arm_tool)"/>
+            <!-- Catalog UR5e mass pitches the base when the arm stretches out.
+                 Use the 1/5 mass and inertia file for that arm. -->
+            <xacro:property name="ur_arm_type" value="$(arg arm_type)"/>
+            <xacro:property name="stock_physical_params" value="$(arg physical_params)"/>
+            <xacro:property name="light_ur5e_physical_params" value="$(find steve_simulation)/configs/ur_config/ur5e/physical_parameters.yaml"/>
+            <xacro:property name="resolved_physical_params" value="${light_ur5e_physical_params if ur_arm_type == 'ur5e' else stock_physical_params}"/>
 
             <!-- parse initial positions as a dictionary -->
             <xacro:property
@@ -37,7 +43,7 @@
                 parent="cabinet_link"
                 joint_limits_parameters_file="$(arg joint_limit_params)"
                 kinematics_parameters_file="$(arg kinematics_params)"
-                physical_parameters_file="$(arg physical_params)"
+                physical_parameters_file="${resolved_physical_params}"
                 visual_parameters_file="$(arg visual_params)"
                 safety_limits="$(arg safety_limits)"
                 safety_pos_margin="$(arg safety_pos_margin)"

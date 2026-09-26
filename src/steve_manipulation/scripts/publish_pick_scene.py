@@ -7,6 +7,9 @@ same boxes there.
 
 The cube is visible but allowed to collide, so the gripper can close on it.
 The stand stays as a real obstacle so the arm will not plan through it.
+Its collision box is wider than the Gazebo model so a sampled trajectory
+cannot clip the physical stand between checks. The top stays at 0.80 m,
+under the cube.
 """
 
 import math
@@ -22,7 +25,10 @@ from shape_msgs.msg import SolidPrimitive
 from std_msgs.msg import ColorRGBA
 
 
-STAND_SIZE = (0.25, 0.25, 0.8)
+# Gazebo model is 0.25 x 0.25 x 0.80. The extra 3 cm on each side is keep-out
+# for the arm; height is unchanged so the top stays at the cube.
+STAND_MARGIN_XY = 0.03
+STAND_SIZE = (0.25 + 2.0 * STAND_MARGIN_XY, 0.25 + 2.0 * STAND_MARGIN_XY, 0.8)
 CUBE_SIZE = (0.04, 0.04, 0.04)
 STAND_COLOR = (0.35, 0.35, 0.38, 1.0)
 CUBE_COLOR = (0.85, 0.15, 0.10, 1.0)
