@@ -205,6 +205,22 @@ def launch_setup(
     # Add AWS RoboMaker models for small house world
     if os.path.exists(steve_simulation_models):
         model_paths.append(steve_simulation_models)
+    try:
+        manipulation_models = os.path.join(
+            get_package_share_directory("steve_manipulation"), "models"
+        )
+        if os.path.exists(manipulation_models):
+            model_paths.append(manipulation_models)
+    except Exception as exc:
+        print(f"[WARN] steve_manipulation models not found on the ROS 2 index: {exc}")
+
+    grasp_plugin_lib = os.path.join(get_package_prefix("steve_simulation"), "lib")
+    if os.path.isdir(grasp_plugin_lib):
+        plugin_path = os.environ.get("GAZEBO_PLUGIN_PATH", "")
+        if grasp_plugin_lib not in plugin_path.split(os.pathsep):
+            os.environ["GAZEBO_PLUGIN_PATH"] = (
+                grasp_plugin_lib + (os.pathsep + plugin_path if plugin_path else "")
+            )
 
     if "GAZEBO_MODEL_PATH" in os.environ:
         os.environ["GAZEBO_MODEL_PATH"] += os.pathsep + os.pathsep.join(model_paths)

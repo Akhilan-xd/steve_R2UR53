@@ -9,6 +9,11 @@
   <author email="padhupradheep@gmail.com">Pradheep Padmanabhan</author>
   <license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>gazebo_dev</build_depend>
+  <build_depend>gazebo_ros</build_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>std_srvs</build_depend>
+  <exec_depend>std_srvs</exec_depend>
 
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>joint_state_publisher</exec_depend>
@@ -33,5 +38,6 @@
     <build_type>ament_cmake</build_type>
     <gazebo_ros gazebo_model_path="${prefix}/.." />
     <gazebo_ros gazebo_model_path="${prefix}/models" />
+    <gazebo_ros plugin_path="${prefix}/lib" />
   </export>
 </package>

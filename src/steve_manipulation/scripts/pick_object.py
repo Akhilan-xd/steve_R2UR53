@@ -41,6 +41,7 @@ from moveit_msgs.msg import (
 )
 from moveit_msgs.srv import ApplyPlanningScene, GetCartesianPath
 from rclpy.action import ActionClient
+from std_srvs.srv import SetBool
 from sensor_msgs.msg import JointState
 from shape_msgs.msg import SolidPrimitive
 
@@ -100,9 +101,10 @@ JOINT_BOUNDS = {
 
 ARM_JOINTS = list(NAMED_POSES["home"].keys())
 GRIPPER_OPEN = 0.0
-# 0.8 rad is fully shut (0 mm). A 40 mm cube meets the pads near 0.42 rad;
-# 0.55 pinches it without driving the command through the cube to 0.79.
-GRIPPER_CLOSED = 0.55
+# 0.8 rad is fully shut (0 mm). The pad meshes meet a 40 mm cube near 0.45 rad.
+# 0.50 is only a small step past that. A stiffer close drives the fingers
+# through the cube, because Gazebo places these joints by position.
+GRIPPER_CLOSED = 0.50
 # Knuckle speed while closing. The position controller jumps to whatever
 # setpoint it is given, so the client has to walk the setpoint itself.
 GRIPPER_CLOSE_SPEED = 0.12  # rad/s, about 4.5 s from open to the grasp
@@ -241,6 +243,7 @@ class SteveArm:
             node, GripperCommand, "/robotiq_gripper_controller/gripper_cmd"
         )
         self.scene = node.create_client(ApplyPlanningScene, "/apply_planning_scene")
+        self.grasp = node.create_client(SetBool, "/grasp_cube")
 
     def wait(self, timeout=30.0):
         self.node.get_logger().info("Waiting for /move_action (move_group)...")
@@ -490,6 +493,23 @@ class SteveArm:
                 self._pace(dt)
         return True
 
+    def grasp_cube(self, hold: bool) -> bool:
+        """Weld or release the Gazebo cube so it moves with the palm."""
+        if not self.grasp.wait_for_service(timeout_sec=2.0):
+            self.node.get_logger().error("No /grasp_cube service")
+            return False
+        request = SetBool.Request()
+        request.data = hold
+        future = self.grasp.call_async(request)
+        rclpy.spin_until_future_complete(self.node, future)
+        response = future.result()
+        if response is None or not response.success:
+            detail = response.message if response is not None else "no response"
+            self.node.get_logger().error(f"Grasp weld failed ({detail})")
+            return False
+        self.node.get_logger().info(response.message)
+        return True
+
     def attach_cube(self) -> bool:
         """Treat the cube as grasped so lift does not collide with it on the stand."""
         if not self.scene.wait_for_service(timeout_sec=2.0):
@@ -568,8 +588,10 @@ def run_pick(arm: SteveArm, args) -> int:
     steps = [
         ("named ready", lambda: arm.move_named("ready")),
         ("open gripper", lambda: arm.set_gripper(GRIPPER_OPEN, speed=GRIPPER_OPEN_SPEED)),
+        ("release cube", lambda: arm.grasp_cube(False)),
         ("pregrasp", lambda: arm.move_pose(pregrasp)),
         ("approach", lambda: arm.cartesian_to(grasp)),
+        ("hold cube", lambda: arm.grasp_cube(True)),
         ("close gripper", lambda: arm.set_gripper(GRIPPER_CLOSED)),
         ("attach cube", lambda: arm.attach_cube() or True),
         ("lift", lambda: arm.cartesian_to(pregrasp)),

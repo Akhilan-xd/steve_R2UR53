@@ -10,6 +10,28 @@
             <size>0.25 0.25 0.8</size>
           </box>
         </geometry>
+        <surface>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>100000</threshold>
+          </bounce>
+          <!-- Lateral grip so a finger that arrives first does not skate
+               the cube off the top. Lift still separates this contact. -->
+          <friction>
+            <ode>
+              <mu>10</mu>
+              <mu2>10</mu2>
+            </ode>
+          </friction>
+          <contact>
+            <ode>
+              <kp>1000000</kp>
+              <kd>450</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+        </surface>
       </collision>
       <visual name="visual">
         <pose>0 0 0.4 0 0 0</pose>

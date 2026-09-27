@@ -18,16 +18,43 @@
           </box>
         </geometry>
         <surface>
+          <!-- Restitution 0, and a capture threshold high enough that a
+               finger impact never counts as a bounce. -->
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>100000</threshold>
+          </bounce>
+          <!-- Gazebo uses the smaller mu of the two surfaces. Match the
+               finger pads (mu 100) so the grasp does not slip. -->
           <friction>
             <ode>
-              <mu>10</mu>
-              <mu2>10</mu2>
+              <!-- Match the finger pads. slip 0 keeps that friction from
+                   skating once the pads are pressing. -->
+              <mu>100</mu>
+              <mu2>100</mu2>
+              <slip1>0</slip1>
+              <slip2>0</slip2>
             </ode>
+            <!-- Resist the cube twisting out of a shallow pinch. -->
+            <torsional>
+              <coefficient>10</coefficient>
+              <patch_radius>0.02</patch_radius>
+              <surface_radius>0.01</surface_radius>
+              <use_patch_radius>true</use_patch_radius>
+              <ode>
+                <slip>0</slip>
+              </ode>
+            </torsional>
           </friction>
           <contact>
             <ode>
-              <kp>1e5</kp>
-              <kd>1</kd>
+              <!-- kp keeps the 50 g cube from squashing. kd is about
+                   2*sqrt(kp*mass) so the contact is critically damped
+                   instead of ringing the cube off the fingers.
+                   max_vel caps how fast a penetration can be corrected. -->
+              <kp>1000000</kp>
+              <kd>450</kd>
+              <max_vel>0.01</max_vel>
               <min_depth>0.001</min_depth>
             </ode>
           </contact>
@@ -40,8 +67,11 @@
           </box>
         </geometry>
         <material>
-          <ambient>0.85 0.15 0.1 1</ambient>
-          <diffuse>0.85 0.15 0.1 1</diffuse>
+          <script>
+            <uri>model://pick_cube/materials/scripts</uri>
+            <uri>model://pick_cube/materials/textures</uri>
+            <name>PickCube/Grip</name>
+          </script>
         </material>
       </visual>
     </link>

@@ -91,8 +91,21 @@
     </joint>
   </ros2_control>
 
-  <!-- Gazebo Classic appearance. Gravity is off so idle fingers do not sag. -->
+  <!-- Gazebo Classic appearance. Gravity is off so idle fingers do not sag.
+       The grasp plugin welds pick_cube to the palm when the pick script asks.
+       Position-locked fingers cannot pinch, and a torque pinch threw the base. -->
   <xacro:if value="$(arg use_gazebo)">
+    <gazebo>
+      <plugin name="steve_grasp_attach" filename="libsteve_grasp_attach.so">
+        <ros>
+          <namespace>/</namespace>
+        </ros>
+        <!-- Palm is lumped into the wrist. Gazebo deletes fixed-joint child links. -->
+        <parent_link>ur5ewrist_3_link</parent_link>
+        <child_model>pick_cube</child_model>
+        <child_link>cube</child_link>
+      </plugin>
+    </gazebo>
     <xacro:macro name="robotiq_gazebo_link" params="link">
       <gazebo reference="${link}">
         <material>Gazebo/DarkGrey</material>
