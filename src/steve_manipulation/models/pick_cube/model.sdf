@@ -60,6 +60,9 @@
           </contact>
         </surface>
       </collision>
+      <!-- A plain SDF color is drawn in Gazebo and then dropped by the depth
+           camera. The script has a texture, so the cube shows in the GUI,
+           the color image, and the depth image. -->
       <visual name="visual">
         <geometry>
           <box>
@@ -73,6 +76,7 @@
             <name>PickCube/Grip</name>
           </script>
         </material>
+        <cast_shadows>false</cast_shadows>
       </visual>
     </link>
   </model>

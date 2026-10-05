@@ -13,6 +13,7 @@ install(FILES .setup_assistant
 
 install(PROGRAMS
   scripts/pick_object.py
+  scripts/fetch_cube.py
   scripts/gripper_command.py
   scripts/publish_pick_scene.py
   DESTINATION lib/${PROJECT_NAME})

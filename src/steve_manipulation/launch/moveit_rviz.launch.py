@@ -53,6 +53,12 @@ def launch_setup(context: LaunchContext, use_sim_time, rviz_config):
                     LaunchConfiguration("pick_scene_z"), value_type=float
                 ),
                 "frame": LaunchConfiguration("pick_scene_frame"),
+                "robot_x": ParameterValue(
+                    LaunchConfiguration("robot_x"), value_type=float
+                ),
+                "robot_y": ParameterValue(
+                    LaunchConfiguration("robot_y"), value_type=float
+                ),
                 "spawn_stand": ParameterValue(
                     LaunchConfiguration("spawn_pick_stand"), value_type=bool
                 ),
@@ -100,7 +106,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "pick_scene_y",
-                default_value="0.55",
+                default_value="1.56",
                 description="Stand/cube world y [m]. Matches manipulation.launch.py cube_y",
             ),
             DeclareLaunchArgument(
@@ -112,6 +118,16 @@ def generate_launch_description():
                 "pick_scene_frame",
                 default_value="world",
                 description="Frame for the MoveIt stand/cube (SRDF world == base_link)",
+            ),
+            DeclareLaunchArgument(
+                "robot_x",
+                default_value="1.375",
+                description="Robot spawn world x. Matches simulation.launch.py",
+            ),
+            DeclareLaunchArgument(
+                "robot_y",
+                default_value="1.56",
+                description="Robot spawn world y. Matches simulation.launch.py",
             ),
             OpaqueFunction(function=launch_setup, args=[use_sim_time, rviz_config]),
         ]

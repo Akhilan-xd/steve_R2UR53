@@ -83,9 +83,11 @@ class PickScenePublisher(Node):
     def __init__(self):
         super().__init__("publish_pick_scene")
         self.declare_parameter("x", -0.20)
-        self.declare_parameter("y", 0.55)
+        self.declare_parameter("y", 1.56)
         self.declare_parameter("z", 0.82)
         self.declare_parameter("frame", "world")
+        self.declare_parameter("robot_x", 1.375)
+        self.declare_parameter("robot_y", 1.56)
         self.declare_parameter("robot_yaw", 3.14159)
         self.declare_parameter("spawn_stand", True)
         self.declare_parameter("spawn_cube", True)
@@ -95,11 +97,15 @@ class PickScenePublisher(Node):
         self.z = float(self.get_parameter("z").value)
         self.frame = str(self.get_parameter("frame").value)
         yaw = float(self.get_parameter("robot_yaw").value)
+        robot_x = float(self.get_parameter("robot_x").value)
+        robot_y = float(self.get_parameter("robot_y").value)
         # Gazebo spawn XY is world. MoveIt's SRDF world is fixed to base_link,
-        # so convert through the robot spawn yaw (pi in simulation.launch.py).
+        # so subtract the robot spawn, then apply yaw (pi in simulation.launch.py).
+        dx = gx - robot_x
+        dy = gy - robot_y
         c, s = math.cos(yaw), math.sin(yaw)
-        self.x = c * gx + s * gy
-        self.y = -s * gx + c * gy
+        self.x = c * dx + s * dy
+        self.y = -s * dx + c * dy
         self.spawn_stand = as_bool(self.get_parameter("spawn_stand").value)
         self.spawn_cube = as_bool(self.get_parameter("spawn_cube").value)
 

@@ -68,13 +68,21 @@ In RViz:
 From the command line:
 
 ```bash
-ros2 run steve_manipulation pick_object.py --named ready
-ros2 run steve_manipulation gripper_command.py open
-ros2 run steve_manipulation gripper_command.py close
-ros2 run steve_manipulation pick_object.py --pick
+ros2 launch steve_manipulation manipulation.launch.py run_fetch:=true
 ```
 
-`--pick` uses a known pose for the red cube. The stand is spawned at world `(-0.20, 0.55)`, which is `base_link (0.20, -0.55)`: in line with the shoulder, on the arm's side, and far enough out that a top-down grasp keeps the elbow bent and `wrist_2` near 90°. Physics grasping in Gazebo Classic is sensitive; if the cube slips, first confirm the arm reaches the cube and the fingers close.
+The robot spawns at `(1.375, 1.56)` with yaw π, one meter behind the stand at `(-0.20, 1.56)`, arm folded. The pan camera looks straight ahead and is pitched down onto that cube. One RViz window shows the map, the local costmap, both lidar scans, and the pan and wrist color images. The robot model stays out of that window. `fetch_cube.py` drives the base from the camera measurement until the body is 10 cm from the stand, then aims the wrist camera, grasps that measurement, and folds the arm to `home`.
+
+Manual arm motions still work:
+
+```bash
+ros2 run steve_manipulation pick_object.py --named look
+ros2 run steve_manipulation pick_object.py --named home
+ros2 run steve_manipulation gripper_command.py open
+ros2 run steve_manipulation gripper_command.py close
+```
+
+`--pick` still drives to the pose given by `--x/--y/--z`. The perceived grasp is `fetch_cube.py`.
 
 ## Maintainer
 
