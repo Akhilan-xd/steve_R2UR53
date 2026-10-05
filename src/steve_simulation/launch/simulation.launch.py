@@ -108,20 +108,8 @@ def launch_setup(
                 print(f"[WARN] Could not resolve map path for '{map_path}': {e}")
 
         if map_path == "":
-            if my_neo_environment in ["neo_workshop", "neo_track1", "small_house"]:
-                world_name = my_neo_environment
-            else:
-                world_name = os.path.splitext(os.path.basename(my_neo_environment))[0]
-            
-            try:
-                map_path = os.path.join(
-                    get_package_share_directory("steve_simulation"),
-                    "maps",
-                    f"{world_name}.yaml",
-                )
-                print(f"[INFO] Auto-detected map file: {map_path}")
-            except Exception:
-                print(f"[WARN] Could not auto-detect map for world: {world_name}")
+            map_path = os.path.expanduser("~/steve_ws/maps/my_house.yaml")
+            print(f"[INFO] Using map file: {map_path}")
 
     if launch_map_server.lower() == "true" and (not map_path or not os.path.exists(map_path)):
         print(f"[WARN] Map server requested but map file not found: {map_path}")
@@ -304,8 +292,12 @@ def launch_setup(
             print(f"[WARN] Could not read arm home pose file: {exc}")
 
     if include_pan_tilt == "true":
+        # Pan stays at 0, so the camera still looks straight ahead.
+        # Tilt 0.41 rad pitches it down onto the cube at the 1 m start.
+        # Level (tilt 0) leaves the cube on the bottom edge, so no red
+        # pixels and no pose.
         jsp_zeros["pan_tilt_pan_motor_joint"] = 0.0
-        jsp_zeros["pan_tilt_tilt_motor_joint"] = -0.2
+        jsp_zeros["pan_tilt_tilt_motor_joint"] = 0.41
 
     # Spawning the robot
     # Using /usr/bin/python3 explicitly to avoid Anaconda conflicts
@@ -322,6 +314,12 @@ def launch_setup(
             "/robot_description",
             "-timeout",
             "300.0",
+            # 1.00 m behind the stand at (-0.20, 1.56). Yaw pi faces -X,
+            # which is straight at the stand, and matches the level pan camera.
+            "-x",
+            "1.375",
+            "-y",
+            "1.56",
             "-z",
             "0.02",  # slight lift so wheel cylinders are not spawned in the floor
             "-Y",
@@ -404,7 +402,7 @@ def launch_setup(
     rviz = Node(
         package="rviz2",
         executable="rviz2",
-        name="rviz2",
+        name="steve_view",
         output="screen",
         arguments=["-d", rviz_config],
         parameters=[{"use_sim_time": use_sim_time}],
@@ -512,6 +510,17 @@ def launch_setup(
         )
         launch_actions.append(map_server_node)
         launch_actions.append(lifecycle_manager_node)
+        # Gazebo publishes odom -> base_link from the world pose. The map is
+        # drawn in RViz only when map -> odom exists.
+        launch_actions.append(
+            Node(
+                package="tf2_ros",
+                executable="static_transform_publisher",
+                name="map_to_odom",
+                arguments=["0", "0", "0", "0", "0", "0", "map", "odom"],
+                parameters=[{"use_sim_time": use_sim_time}],
+            )
+        )
 
     # launch_actions.append(shutdown_event)
     print("\n" + "=" * 70)
@@ -588,8 +597,8 @@ def generate_launch_description():
 
     declare_map_cmd = DeclareLaunchArgument(
         "map",
-        default_value="",
-        description="Full path to map yaml file (empty = auto-detect from world)",
+        default_value=os.path.expanduser("~/steve_ws/maps/my_house.yaml"),
+        description="Full path to map yaml. The image is maps/my_house.pgm",
     )
 
     declare_launch_map_server_cmd = DeclareLaunchArgument(

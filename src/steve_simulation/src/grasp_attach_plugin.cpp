@@ -8,6 +8,7 @@
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo_ros/node.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
@@ -33,6 +34,10 @@ public:
     service_ = ros_node_->create_service<std_srvs::srv::SetBool>(
       "/grasp_cube",
       std::bind(&GraspAttachPlugin::OnService, this, std::placeholders::_1, std::placeholders::_2));
+    // Cube center in the palm frame. The pick script compares it with
+    // gripper_tcp to decide whether the fingers are really around the cube.
+    in_palm_ = ros_node_->create_publisher<geometry_msgs::msg::PointStamped>(
+      "/grasp_cube/cube_in_palm", 10);
 
     update_ = gazebo::event::Events::ConnectWorldUpdateBegin(
       std::bind(&GraspAttachPlugin::OnUpdate, this));
@@ -82,8 +87,37 @@ private:
     response->message = "grasp weld timed out";
   }
 
+  void PublishInPalm()
+  {
+    auto world = model_->GetWorld();
+    if (!world || !in_palm_) {
+      return;
+    }
+    const auto now = world->SimTime();
+    if ((now - last_publish_).Double() < 0.05) {
+      return;
+    }
+    last_publish_ = now;
+    auto palm = FindLink(model_, parent_link_name_);
+    auto cube = CubeLink();
+    if (!palm || !cube) {
+      return;
+    }
+    const auto offset = cube->WorldPose().Pos() - palm->WorldPose().Pos();
+    const auto local = palm->WorldPose().Rot().RotateVectorReverse(offset);
+    geometry_msgs::msg::PointStamped msg;
+    msg.header.frame_id = parent_link_name_;
+    msg.header.stamp.sec = static_cast<int32_t>(now.sec);
+    msg.header.stamp.nanosec = static_cast<uint32_t>(now.nsec);
+    msg.point.x = local.X();
+    msg.point.y = local.Y();
+    msg.point.z = local.Z();
+    in_palm_->publish(msg);
+  }
+
   void OnUpdate()
   {
+    PublishInPalm();
     bool have_request = false;
     bool hold = false;
     {
@@ -235,6 +269,8 @@ private:
   gazebo::physics::ModelPtr model_;
   gazebo_ros::Node::SharedPtr ros_node_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_;
+  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr in_palm_;
+  gazebo::common::Time last_publish_;
   gazebo::event::ConnectionPtr update_;
   gazebo::physics::JointPtr joint_;
 

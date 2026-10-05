@@ -360,28 +360,28 @@ Visualization Manager:
       Max Value: 1
       Median window: 5
       Min Value: 0
-      Name: Image
+      Name: Wrist
       Normalize Range: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /wrist_camera/wrist_camera/image_raw
+        Value: /wrist_camera/wrist_camera/color/image_raw
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: true
       Max Value: 1
       Median window: 5
       Min Value: 0
-      Name: Image
+      Name: Pan
       Normalize Range: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /pan_tilt_camera/pan_tilt_camera/image_raw
+        Value: /pan_tilt_camera/pan_tilt_camera/color/image_raw
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true

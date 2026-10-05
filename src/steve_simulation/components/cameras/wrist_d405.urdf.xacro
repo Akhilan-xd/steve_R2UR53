@@ -105,8 +105,9 @@
       <camera>
         <horizontal_fov>${80.4*pi/180}</horizontal_fov>
         <image>
-          <width>640</width>
-          <height>480</height>
+          <!-- 1280 keeps a 40 mm cube above ~15 px at the 1.5 m spawn standoff. -->
+          <width>1280</width>
+          <height>960</height>
           <format>R8G8B8</format>
         </image>
         <clip>
@@ -116,18 +117,24 @@
       </camera>
       <plugin name="wrist_camera_controller" filename="libgazebo_ros_camera.so">
         <ros>
+          <!-- The plugin advertises wrist_camera/image_raw inside this
+               namespace. Remapping the bare name image_raw does not match,
+               and the picture never reaches color/image_raw. -->
           <namespace>wrist_camera</namespace>
-          <remapping>image_raw:=color/image_raw</remapping>
-          <remapping>camera_info:=color/camera_info</remapping>
-          <remapping>depth/image_raw:=aligned_depth_to_color/image_raw</remapping>
-          <remapping>depth/camera_info:=aligned_depth_to_color/camera_info</remapping>
-          <remapping>points:=depth/color/points</remapping>
+          <remapping>wrist_camera/image_raw:=color/image_raw</remapping>
+          <remapping>wrist_camera/camera_info:=color/camera_info</remapping>
+          <remapping>wrist_camera/depth/image_raw:=aligned_depth_to_color/image_raw</remapping>
+          <remapping>wrist_camera/depth/camera_info:=aligned_depth_to_color/camera_info</remapping>
+          <remapping>wrist_camera/points:=depth/color/points</remapping>
         </ros>
         <camera_name>wrist_camera</camera_name>
         <frame_name>wrist_camera_color_optical_frame</frame_name>
         <hack_baseline>0.018</hack_baseline>
         <min_depth>0.07</min_depth>
-        <max_depth>0.5</max_depth>
+        <!-- The look pose sees the cube at about 2 m from the spawn, and at
+             about 1.2 m once the base is beside the stand. 0.5 m returned
+             no range for either view. -->
+        <max_depth>3.0</max_depth>
       </plugin>
     </sensor>
   </gazebo>

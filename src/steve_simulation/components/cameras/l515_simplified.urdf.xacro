@@ -60,8 +60,8 @@
           <camera>
             <horizontal_fov>${70*pi/180}</horizontal_fov>
             <image>
-              <width>640</width>
-              <height>480</height>
+              <width>1280</width>
+              <height>960</height>
               <format>R8G8B8</format>
             </image>
             <clip>
@@ -71,12 +71,15 @@
           </camera>
           <plugin name="${name}_controller" filename="libgazebo_ros_camera.so">
             <ros>
+              <!-- The plugin advertises ${name}/image_raw inside this
+                   namespace, so the published name is /${name}/${name}/image_raw
+                   unless this remap matches that full relative name. -->
               <namespace>${name}</namespace>
-              <remapping>image_raw:=color/image_raw</remapping>
-              <remapping>camera_info:=color/camera_info</remapping>
-              <remapping>depth/image_raw:=aligned_depth_to_color/image_raw</remapping>
-              <remapping>depth/camera_info:=aligned_depth_to_color/camera_info</remapping>
-              <remapping>points:=depth/color/points</remapping>
+              <remapping>${name}/image_raw:=color/image_raw</remapping>
+              <remapping>${name}/camera_info:=color/camera_info</remapping>
+              <remapping>${name}/depth/image_raw:=aligned_depth_to_color/image_raw</remapping>
+              <remapping>${name}/depth/camera_info:=aligned_depth_to_color/camera_info</remapping>
+              <remapping>${name}/points:=depth/color/points</remapping>
             </ros>
             <camera_name>${name}</camera_name>
             <frame_name>${name}_color_optical_frame</frame_name>

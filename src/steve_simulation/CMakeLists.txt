@@ -6,11 +6,13 @@ find_package(gazebo_dev REQUIRED)
 find_package(gazebo_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 add_library(steve_grasp_attach SHARED src/grasp_attach_plugin.cpp)
 ament_target_dependencies(steve_grasp_attach
   gazebo_dev
   gazebo_ros
+  geometry_msgs
   rclcpp
   std_srvs)
 

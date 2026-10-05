@@ -359,7 +359,7 @@ global_costmap:
 map_server:
   ros__parameters:
     use_sim_time: True
-    yaml_filename: "neo_track1.yaml"
+    yaml_filename: "/home/lil-e-va/steve_ws/maps/my_house.yaml"
 
 map_saver:
   ros__parameters:

@@ -1,23 +1,9 @@
-# Compact UR5e home / stow pose used when the robot is spawned.
-# Gazebo reads these via components/arm/ur_arm.urdf.xacro into ros2_control
-# <param name="initial_value">. RViz is seeded with the same values through
-# joint_state_publisher zeros in simulation.launch.py.
-#
-# Geometry this pose is built around:
-#   - Arm is mounted on the cabinet, yawed -90 deg
-#   - Cabinet sits under the shoulder
-#   - Pan-tilt tower stands behind the base (negative x)
-#
-# Joint meaning (radians):
-#   shoulder_pan  = 0      -> fold in the side plane, not into the tower
-#   shoulder_lift = -pi/2  -> upper arm straight up, clear of the cabinet
-#   elbow         = +pi/2  -> forearm folded, compact L-shape
-#   wrists        = -pi/2, -pi/2, 0 -> tool pointing in a neutral orientation
-#
-# Same arm configuration as the "home" keyframe in robots/mmo_700.xml.
-shoulder_pan_joint: 0.0
-shoulder_lift_joint: -1.5708
-elbow_joint: 2.7
-wrist_1_joint: -1.2
-wrist_2_joint: 0.0
-wrist_3_joint: 0.0
+# Spawn pose, the same joints as the MoveIt "home" state.
+# Parked on the arm's -Y side so the elbow stays out of the pan view.
+# The wrist camera looks along the pan axis, including the 0.41 rad downward tilt.
+shoulder_pan_joint: -0.9423
+shoulder_lift_joint: -0.8950
+elbow_joint: 1.8669
+wrist_1_joint: -1.1554
+wrist_2_joint: -0.9506
+wrist_3_joint: 0.1067
