@@ -25,13 +25,7 @@ from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
     bringup_dir = get_package_share_directory('steve_navigation')
-    try:
-        default_map = os.path.join(
-            get_package_share_directory('steve_simulation'),
-            'maps',
-            'small_house.yaml')
-    except Exception:
-        default_map = ''
+    default_map = os.path.expanduser('~/steve_ws/maps/my_house.yaml')
 
     namespace = LaunchConfiguration('namespace')
     map_file = LaunchConfiguration('map')

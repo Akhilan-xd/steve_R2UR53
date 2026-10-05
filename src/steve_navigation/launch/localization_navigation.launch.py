@@ -11,7 +11,7 @@ from launch.substitutions import LaunchConfiguration
 def generate_launch_description():
     bringup_dir = get_package_share_directory('steve_navigation')
     sim_dir = get_package_share_directory('steve_simulation')
-    default_map = os.path.join(sim_dir, 'maps', 'small_house.yaml')
+    default_map = os.path.expanduser('~/steve_ws/maps/my_house.yaml')
 
     namespace = LaunchConfiguration('namespace')
     map_file = LaunchConfiguration('map')
