@@ -15,6 +15,7 @@ def get_moveit_config(
     include_pan_tilt="true",
     include_depth_camera="false",
     use_docking_adapter="False",
+    real_robot="false",
 ):
     try:
         from moveit_configs_utils import MoveItConfigsBuilder
@@ -26,6 +27,11 @@ def get_moveit_config(
 
     sim_share = get_package_share_directory("steve_simulation")
     urdf_path = os.path.join(sim_share, "robots", "mmo_700", "mmo_700.urdf.xacro")
+    controllers_file = (
+        "config/moveit_controllers_real.yaml"
+        if str(real_robot).lower() == "true"
+        else "config/moveit_controllers.yaml"
+    )
 
     return (
         MoveItConfigsBuilder("mmo_700", package_name="steve_manipulation")
@@ -45,7 +51,7 @@ def get_moveit_config(
         .robot_description_kinematics(file_path="config/kinematics.yaml")
         .joint_limits(file_path="config/joint_limits.yaml")
         .trajectory_execution(
-            file_path="config/moveit_controllers.yaml",
+            file_path=controllers_file,
             moveit_manage_controllers=False,
         )
         .planning_pipelines(pipelines=["ompl"])

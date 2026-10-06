@@ -1,0 +1,34 @@
+# How MoveIt talks to ros2_control on the real robot. Names must match the
+# controllers that steve_hardware_bringup (ur_robot_driver) spawns.
+trajectory_execution:
+  allowed_execution_duration_scaling: 2.0
+  allowed_goal_duration_margin: 1.0
+  allowed_start_tolerance: 0.05
+  trajectory_duration_monitoring: true
+
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names:
+    - scaled_joint_trajectory_controller
+    - robotiq_gripper_controller
+
+  scaled_joint_trajectory_controller:
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - ur5eshoulder_pan_joint
+      - ur5eshoulder_lift_joint
+      - ur5eelbow_joint
+      - ur5ewrist_1_joint
+      - ur5ewrist_2_joint
+      - ur5ewrist_3_joint
+
+  # Not served until a Robotiq driver runs (enable_gripper:=true).
+  robotiq_gripper_controller:
+    action_ns: gripper_cmd
+    type: GripperCommand
+    default: false
+    joints:
+      - robotiq_85_left_knuckle_joint

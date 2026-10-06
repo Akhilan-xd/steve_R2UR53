@@ -5,8 +5,10 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    LogInfo,
     OpaqueFunction,
     RegisterEventHandler,
+    SetLaunchConfiguration,
     TimerAction,
 )
 from launch.event_handlers import OnProcessExit
@@ -29,6 +31,7 @@ def generate_launch_description():
     cube_y = LaunchConfiguration("cube_y")
     cube_z = LaunchConfiguration("cube_z")
     run_fetch = LaunchConfiguration("run_fetch")
+    real_robot = LaunchConfiguration("real_robot")
 
     spawn_script = os.path.join(
         get_package_prefix("gazebo_ros"), "lib", "gazebo_ros", "spawn_entity.py"
@@ -51,7 +54,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(manip_dir, "launch", "move_group.launch.py")
         ),
-        launch_arguments={"use_sim_time": use_sim_time}.items(),
+        launch_arguments={"use_sim_time": use_sim_time, "real_robot": real_robot}.items(),
     )
 
     rviz = IncludeLaunchDescription(
@@ -148,6 +151,10 @@ def generate_launch_description():
     def start_fetch(context):
         if not IfCondition(run_fetch).evaluate(context):
             return []
+        # fetch_cube.py runs on sim time and welds the cube through the
+        # Gazebo /grasp_cube plugin, so it cannot drive the real robot yet.
+        if IfCondition(real_robot).evaluate(context):
+            return [LogInfo(msg="run_fetch is simulation-only; ignored with real_robot:=true")]
         return [TimerAction(period=20.0, actions=[fetch])]
 
     return LaunchDescription(
@@ -192,6 +199,14 @@ def generate_launch_description():
                 default_value="0.83",
                 description="Cube center z. Stand top is 0.80 m, so 0.83 sits the 40 mm cube on it",
             ),
+            DeclareLaunchArgument(
+                "real_robot",
+                default_value="false",
+                description="Run against steve_hardware_bringup: wall clock, no Gazebo, no spawned scene",
+            ),
+            SetLaunchConfiguration("use_sim_time", "false", condition=IfCondition(real_robot)),
+            SetLaunchConfiguration("launch_simulation", "false", condition=IfCondition(real_robot)),
+            SetLaunchConfiguration("spawn_pick_scene", "false", condition=IfCondition(real_robot)),
             OpaqueFunction(function=start_moveit),
             simulation,
             delayed_scene,

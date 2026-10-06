@@ -16,6 +16,7 @@ def launch_setup(
     include_wrist_camera,
     include_pan_tilt,
     include_depth_camera,
+    real_robot,
 ):
     share = get_package_share_directory("steve_manipulation")
     sys.path.insert(0, os.path.join(share, "launch"))
@@ -26,6 +27,7 @@ def launch_setup(
         include_wrist_camera=include_wrist_camera.perform(context),
         include_pan_tilt=include_pan_tilt.perform(context),
         include_depth_camera=include_depth_camera.perform(context),
+        real_robot=real_robot.perform(context),
     )
 
     move_group = Node(
@@ -58,6 +60,7 @@ def generate_launch_description():
     include_wrist_camera = LaunchConfiguration("include_wrist_camera")
     include_pan_tilt = LaunchConfiguration("include_pan_tilt")
     include_depth_camera = LaunchConfiguration("include_depth_camera")
+    real_robot = LaunchConfiguration("real_robot")
 
     return LaunchDescription(
         [
@@ -66,6 +69,11 @@ def generate_launch_description():
             DeclareLaunchArgument("include_wrist_camera", default_value="true"),
             DeclareLaunchArgument("include_pan_tilt", default_value="true"),
             DeclareLaunchArgument("include_depth_camera", default_value="false"),
+            DeclareLaunchArgument(
+                "real_robot",
+                default_value="false",
+                description="Use the controllers started by steve_hardware_bringup",
+            ),
             OpaqueFunction(
                 function=launch_setup,
                 args=[
@@ -74,6 +82,7 @@ def generate_launch_description():
                     include_wrist_camera,
                     include_pan_tilt,
                     include_depth_camera,
+                    real_robot,
                 ],
             ),
         ]

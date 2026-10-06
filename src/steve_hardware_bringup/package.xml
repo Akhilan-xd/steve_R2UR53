@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>steve_hardware_bringup</name>
+  <version>1.0.0</version>
+  <description>Hardware bringup package for Steve robot - initializes all real robot components</description>
+  <maintainer email="nakhyeshrikar@icloud.com">ItsShriks</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Robot Base Dependencies -->
+  <exec_depend>neo_relayboard_v2-2</exec_depend>
+  <exec_depend>neo_kinematics_omnidrive2</exec_depend>
+
+  <!-- LiDAR Dependencies -->
+  <exec_depend>neo_sick_s300-2</exec_depend>
+
+  <!-- Teleop Dependencies -->
+  <exec_depend>neo_teleop2</exec_depend>
+  <exec_depend>joy</exec_depend>
+
+  <!-- UR Arm Dependencies -->
+  <exec_depend>ur_robot_driver</exec_depend>
+  <exec_depend>ur_description</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+
+  <!-- Camera Dependencies -->
+  <exec_depend>realsense2_camera</exec_depend>
+
+  <!-- Robot Description (shared with simulation and MoveIt) -->
+  <exec_depend>steve_simulation</exec_depend>
+
+  <!-- Core ROS Dependencies -->
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <!-- Launch Dependencies -->
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

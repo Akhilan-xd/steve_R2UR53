@@ -12,10 +12,10 @@ The robot is based on a **Neobotix MMO-700** omnidirectional Mecanum base with a
 | `steve_navigation` | Yes | Mapping, AMCL localization, Nav2 |
 | `steve_manipulation` | Yes | MoveIt 2, gripper, scripted pick, full fetch cycle |
 | `steve_perception` | Yes | Red cube detection from the pan and wrist depth cameras |
-| `steve_essentials` | **Not yet** | Neobotix drivers, SICK S300, relayboard, teleop, RealSense. To be added |
-| `steve_hardware_bringup` | **Not yet** | Real-robot bringup (base, lidars, UR5e, pan-tilt). To be added |
+| `steve_essentials` | Yes (git submodule) | Neobotix drivers, SICK S300, relayboard, teleop, RealSense |
+| `steve_hardware_bringup` | Yes | Real-robot bringup (base, lidars, joystick, UR5e, L515) |
 
-Everything below runs in **simulation only**. Running on the real robot needs `steve_essentials` and `steve_hardware_bringup`, which are not pushed to this repository yet.
+The sections up to [Real robot](#real-robot) run in simulation. The real-robot bringup covers the base, both lidars, the joystick, the UR5e, and the RealSense cameras. The pan-tilt motors and the Robotiq gripper have no real driver yet.
 
 ## Robot overview
 
@@ -55,8 +55,8 @@ steve_ws/
 │   ├── steve_navigation/      # Nav2 mapping, AMCL localization, path planning
 │   ├── steve_manipulation/    # MoveIt 2 arm/gripper planning, pick and fetch
 │   ├── steve_perception/      # Red cube pose from the pan and wrist cameras
-│   ├── steve_essentials/      # (not yet in the repo) hardware drivers
-│   └── steve_hardware_bringup/# (not yet in the repo) real-robot bringup
+│   ├── steve_essentials/      # Hardware drivers (git submodule, ItsShriks/steve_essentials)
+│   └── steve_hardware_bringup/# Real-robot bringup
 └── README.md
 ```
 
@@ -102,7 +102,7 @@ src/steve_navigation/
 ├── config/
 │   ├── mapping.yaml                      # slam_toolbox params
 │   ├── navigation_sim.yaml               # Nav2 params for simulation (used by default)
-│   └── navigation.yaml                   # Alternate Nav2 params
+│   └── navigation.yaml                   # Nav2 params for the real robot (filtered S300 scans)
 ├── rviz/                                 # RViz layouts
 └── scripts/navigate_to_pose.py           # CLI client for NavigateToPose
 ```
@@ -164,6 +164,14 @@ ros2 launch steve_perception cube_perception.launch.py
 ```
 
 ## Build
+
+`steve_essentials` is a git submodule with its own submodules. Clone recursively, or fetch them in an existing clone:
+
+```bash
+git clone --recursive git@github.com:Akhilan-xd/steve_R2UR53.git steve_ws
+# or, in an existing clone:
+git submodule update --init --recursive
+```
 
 MoveIt 2 is not bundled with the workspace. Install it once:
 
@@ -323,6 +331,54 @@ ros2 run steve_manipulation fetch_cube.py
 
 `fetch_cube.py` drives the base directly on `/cmd_vel`. Do not run Nav2 at the same time.
 
+## Real robot
+
+Run these on the robot PC. Besides MoveIt, the hardware needs the UR driver and librealsense2:
+
+```bash
+sudo apt install ros-humble-ur ros-humble-librealsense2
+colcon build --symlink-install --packages-up-to \
+  steve_hardware_bringup steve_navigation steve_manipulation steve_perception
+```
+
+### Hardware bringup
+
+```bash
+ros2 launch steve_hardware_bringup hardware_bringup.launch.py robot_ip:=192.168.1.102
+```
+
+This starts the relayboard and omnidrive kinematics, both SICK S300 scanners with their filters, the joystick (`neo_teleop2`), the UR5e `ros2_control` driver (`scaled_joint_trajectory_controller`), and the L515 on the pan-tilt tower. It also starts `robot_state_publisher` and fills the joints that have no driver (pan, tilt, gripper fingers) into `/joint_states_complete`, the same topic simulation uses.
+
+| Argument | Default | Role |
+| --- | --- | --- |
+| `robot_ip` | `192.168.1.102` | UR controller IP |
+| `enable_base` / `enable_lidar` / `enable_teleop` / `enable_arm` | `true` | Turn single drivers off for debugging |
+| `enable_camera` | `true` | L515 on the pan-tilt tower |
+| `enable_wrist_camera` | `false` | D405 on the wrist. With two RealSense cameras, set `pan_tilt_camera_serial_no` and `wrist_camera_serial_no` |
+| `enable_pan_tilt` | `false` | Dynamixel motors. Needs `steve_pan_tilt_controller`, which is not in the workspace yet; the head is held at tilt 0.41 rad |
+| `enable_gripper` | `false` | Starts UR tool communication only. No Robotiq driver is wired yet |
+
+On the UR teach pendant, start the External Control program once the driver is up, or the arm will not accept trajectories.
+
+### Navigation on the robot
+
+```bash
+ros2 launch steve_navigation localization_navigation.launch.py \
+  launch_simulation:=false use_sim_time:=false \
+  params_file:=$HOME/steve_ws/install/steve_navigation/share/steve_navigation/config/navigation.yaml \
+  map:=$HOME/steve_ws/maps/my_house.yaml
+```
+
+For mapping: `ros2 launch steve_navigation mapping.launch.py use_sim_time:=false`.
+
+### MoveIt and perception on the robot
+
+```bash
+ros2 launch steve_manipulation manipulation.launch.py real_robot:=true
+```
+
+`real_robot:=true` uses the wall clock, skips Gazebo and the spawned stand, and points MoveIt at `scaled_joint_trajectory_controller` (`config/moveit_controllers_real.yaml`). `pick_object.py --named ...` then moves the real arm. The full fetch cycle (`run_fetch`) stays simulation-only: it runs on sim time and holds the cube through the Gazebo grasp plugin.
+
 ## Maintainer
 
 This workspace is maintained by:
@@ -342,3 +398,5 @@ The simulation and navigation packages started from Neobotix ROS 2 bringup (`neo
 - `steve_navigation` — Apache-2.0
 - `steve_manipulation` — Apache-2.0
 - `steve_perception` — Apache-2.0
+- `steve_hardware_bringup` — MIT
+- `steve_essentials` — MIT for custom code; third-party drivers keep their own licenses

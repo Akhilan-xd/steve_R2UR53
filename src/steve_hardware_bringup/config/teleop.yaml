@@ -1,0 +1,22 @@
+/**:
+  ros__parameters:
+    # joystick axis mapping
+    axis_linear_x: 1
+    axis_linear_y: 0
+    axis_angular_z: 2
+
+    # maximum velocities [rad/s, m/s, m/s]
+    # Reduced for safety to prevent sudden movements
+    scale_angular_z: 0.4
+    scale_linear_x: 0.4
+    scale_linear_y: 0.4
+
+    # low pass filter gain (1 = no filtering, higher = smoother)
+    # Increased to 0.7 to prevent jerky movements on deadman press
+    smooth_factor: 0.7
+
+    # button on the controller wich has to be pushed while driving
+    deadman_button: 5
+
+    # timeout after which to stop robot if no command is received [s]
+    joy_timeout: 1.0

@@ -316,7 +316,7 @@ behavior_server:
     global_frame: odom
     robot_base_frame: base_link
     transform_timeout: 0.1
-    use_sim_time: true
+    use_sim_time: False
     simulate_ahead_time: 2.0
     max_rotational_vel: 0.5
     min_rotational_vel: 0.3

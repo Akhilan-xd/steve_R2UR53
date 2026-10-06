@@ -1,0 +1,4 @@
+[submodule "src/steve_essentials"]
+	path = src/steve_essentials
+	url = https://github.com/ItsShriks/steve_essentials.git
+	branch = dev
