@@ -121,7 +121,7 @@ MoveIt 2 bringup for the UR5e and Robotiq gripper, plus the pick and fetch scrip
 ```text
 src/steve_manipulation/
 ├── launch/
-│   ├── manipulation.launch.py  # Optional sim + stand/cube + perception + move_group + RViz (+ fetch)
+│   ├── manipulation.launch.py  # Optional sim + stand/cube + perception + move_group + RViz (+ fetch/WBC)
 │   ├── move_group.launch.py    # MoveIt planning server
 │   └── moveit_rviz.launch.py   # RViz with map, costmap, lidar, and both camera images
 ├── config/                     # SRDF, IK, OMPL, controller mapping, RViz layouts
@@ -129,6 +129,11 @@ src/steve_manipulation/
 └── scripts/
     ├── pick_object.py          # Named poses and a scripted pick at a known pose
     ├── fetch_cube.py           # Full cycle: see, drive, grasp, carry, place on the table
+    ├── wbc_pick.py             # Whole-body SQP pick: base and arm move together
+    ├── wbc_solver.py           # Receding-horizon SQP (base + arm)
+    ├── wbc_estimator.py        # Base EKF and plan timing
+    ├── wbc_task.py             # Approach, descend, grasp, lift, carry
+    ├── wbc_kinematics.py       # URDF chain, Jacobians, IK
     ├── publish_pick_scene.py   # Stand and cube collision objects for MoveIt
     └── gripper_command.py      # Open / close the 2F-85
 ```
@@ -140,6 +145,7 @@ What it does:
 - Opens and closes the gripper through `robotiq_gripper_controller`
 - Spawns a stand and a 40 mm red cube one meter in front of the robot
 - Named arm poses: `home` (parked beside the pan view), `ready`, `see`, `look`
+- Whole-body SQP pick (`wbc_pick.py`): the base approaches the stand while the arm moves to the pregrasp
 
 ### `steve_perception`
 
@@ -322,6 +328,34 @@ ros2 run steve_manipulation fetch_cube.py
 ```
 
 `fetch_cube.py` drives the base directly on `/cmd_vel`. Do not run Nav2 at the same time.
+
+## Whole-body pick
+
+The base and the arm are one Sequential Quadratic Program (SQP) with kinodynamic coupling, not two scripts in sequence. While the base drives to the stand, the arm unfolds toward the pregrasp. When the base is close, the hand descends and the gripper closes on the red cube.
+
+```bash
+ros2 launch steve_manipulation manipulation.launch.py run_wbc:=true
+```
+
+That starts the same Gazebo scene as the fetch cycle, then runs `wbc_pick.py` 20 seconds later. The controller:
+
+1. Reads the cube from the pan or wrist depth camera.
+2. Solves a short-horizon SQP over the omnidirectional base twist and the six UR5e joint speeds, with speed and acceleration limits on both. Near the stand the base speed limit shrinks with the distance left, so the base brakes into the standoff.
+3. Fuses `/odom` and the sent twist in an EKF. The solve runs in its own process and can take longer than a control step, so each plan starts from the state the EKF predicts for the moment that plan takes over. Plans are streamed to `/cmd_vel` and the arm at 50 Hz in the meantime.
+4. Starts the descent once the base is near the standoff and the hand is on the pregrasp, then welds and closes the gripper when the cube is between the pads.
+5. Lifts and carries the cube back to the start pose.
+
+Do not run Nav2 or `fetch_cube.py` at the same time: `wbc_pick.py` owns `/cmd_vel`. If Gazebo is already up with the stand and cube:
+
+```bash
+ros2 run steve_manipulation wbc_pick.py
+```
+
+The kinematic closed-loop check (no Gazebo) is:
+
+```bash
+python3 -m pytest src/steve_manipulation/test/test_wbc_pick.py
+```
 
 ## Maintainer
 

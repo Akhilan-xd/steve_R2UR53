@@ -2,7 +2,7 @@
 
 MoveIt 2 bringup for **Steve**: plan collision-aware UR5e motions and open/close the Robotiq 2F-85 gripper.
 
-This package is the arm/gripper counterpart of `steve_navigation`. Navigation drives the base with Nav2. Manipulation moves the arm with MoveIt.
+This package is the arm/gripper counterpart of `steve_navigation`. Navigation drives the base with Nav2. Manipulation moves the arm with MoveIt. Whole-body pick (`wbc_pick.py`) drives the base and the arm from one SQP, so they move at the same time.
 
 ## What MoveIt is doing
 
@@ -72,6 +72,14 @@ ros2 launch steve_manipulation manipulation.launch.py run_fetch:=true
 ```
 
 The robot spawns at `(1.375, 1.56)` with yaw π, one meter behind the stand at `(-0.20, 1.56)`, arm folded. The pan camera looks straight ahead and is pitched down onto that cube. One RViz window shows the map, the local costmap, both lidar scans, and the pan and wrist color images. The robot model stays out of that window. `fetch_cube.py` drives the base from the camera measurement until the body is 10 cm from the stand, then aims the wrist camera, grasps that measurement, and folds the arm to `home`.
+
+Whole-body pick, with the base and the arm in one SQP (kinodynamic coupling). The arm unfolds to the pregrasp while the base drives, then the gripper takes the cube when the base is near the stand:
+
+```bash
+ros2 launch steve_manipulation manipulation.launch.py run_wbc:=true
+```
+
+Do not run Nav2 at the same time. `wbc_pick.py` publishes `/cmd_vel` and streams the arm on `joint_trajectory_controller`.
 
 Manual arm motions still work:
 

@@ -29,6 +29,7 @@ def generate_launch_description():
     cube_y = LaunchConfiguration("cube_y")
     cube_z = LaunchConfiguration("cube_z")
     run_fetch = LaunchConfiguration("run_fetch")
+    run_wbc = LaunchConfiguration("run_wbc")
 
     spawn_script = os.path.join(
         get_package_prefix("gazebo_ros"), "lib", "gazebo_ros", "spawn_entity.py"
@@ -143,12 +144,23 @@ def generate_launch_description():
         parameters=[{"use_sim_time": ParameterValue(use_sim_time, value_type=bool)}],
     )
 
+    wbc = Node(
+        package="steve_manipulation",
+        executable="wbc_pick.py",
+        name="wbc_pick",
+        output="screen",
+        parameters=[{"use_sim_time": ParameterValue(use_sim_time, value_type=bool)}],
+    )
+
     # A condition on TimerAction is ignored by this launch setup, same as
-    # the MoveIt timer above. Decide here, then start the timer.
-    def start_fetch(context):
-        if not IfCondition(run_fetch).evaluate(context):
-            return []
-        return [TimerAction(period=20.0, actions=[fetch])]
+    # the MoveIt timer above. Decide here, then start the timer. Whole-body
+    # pick owns /cmd_vel, so it wins if both flags are set.
+    def start_task(context):
+        if IfCondition(run_wbc).evaluate(context):
+            return [TimerAction(period=20.0, actions=[wbc])]
+        if IfCondition(run_fetch).evaluate(context):
+            return [TimerAction(period=20.0, actions=[fetch])]
+        return []
 
     return LaunchDescription(
         [
@@ -185,7 +197,12 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "run_fetch",
                 default_value="false",
-                description="Pan or wrist depth starts the base. MoveIt solves the grasp while the base closes in",
+                description="Sequential fetch: drive, then MoveIt grasp, then place on the kitchen table",
+            ),
+            DeclareLaunchArgument(
+                "run_wbc",
+                default_value="false",
+                description="Whole-body SQP pick: the base drives to the stand while the arm unfolds to the pregrasp, then the gripper takes the cube",
             ),
             DeclareLaunchArgument(
                 "cube_z",
@@ -197,6 +214,6 @@ def generate_launch_description():
             delayed_scene,
             cube_after_stand,
             perception,
-            OpaqueFunction(function=start_fetch),
+            OpaqueFunction(function=start_task),
         ]
     )
