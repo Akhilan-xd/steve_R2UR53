@@ -14,6 +14,7 @@ install(FILES .setup_assistant
 install(PROGRAMS
   scripts/pick_object.py
   scripts/fetch_cube.py
+  scripts/record_fetch.py
   scripts/gripper_command.py
   scripts/publish_pick_scene.py
   scripts/wbc_pick.py

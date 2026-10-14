@@ -31,7 +31,7 @@ from rclpy.action import ActionClient
 from rclpy.duration import Duration
 from rclpy.node import Node
 from rclpy.parameter import Parameter
-from rclpy.qos import DurabilityPolicy, QoSProfile
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.time import Time
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
@@ -46,6 +46,14 @@ from wbc_kinematics import Chain  # noqa: E402
 from wbc_solver import Limits, SolverProcess, WholeBodyMPC  # noqa: E402
 from wbc_task import ARM_JOINTS, HOME, KEEPOUT_LINKS, Phase, PickPlan  # noqa: E402
 
+# Same durability as the recorder's subscription. A volatile publisher
+# never connects to that subscription, so the live graph stays empty.
+PHASE_QOS = QoSProfile(
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.TRANSIENT_LOCAL,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=1,
+)
 GRIPPER_OPEN = 0.0
 GRIPPER_CLOSED = 0.50
 GRIPPER_OPEN_SPEED = 0.4
@@ -192,7 +200,7 @@ class WbcPick:
         self.arm_pub = node.create_publisher(
             JointTrajectory, "/joint_trajectory_controller/joint_trajectory", 10
         )
-        self.phase_pub = node.create_publisher(String, "/wbc/phase", 10)
+        self.phase_pub = node.create_publisher(String, "/wbc/phase", PHASE_QOS)
         self.hand_pub = node.create_publisher(PoseStamped, "/wbc/hand_target", 10)
         self.base_pub = node.create_publisher(PoseStamped, "/wbc/base_target", 10)
         self.twist = Twist()
@@ -484,6 +492,9 @@ class WbcPick:
                     if closed or waited:
                         plan.start_lift(now, base, q)
                 if plan.phase in (Phase.DONE, Phase.FAILED):
+                    # The recorder writes the graph when it hears this. The
+                    # break used to skip _publish_task, so "done" never went out.
+                    self._publish_task(plan, plan.task(base, now), self.node.get_clock().now().to_msg())
                     break
 
                 request = stream.request(now, self.ekf, q)

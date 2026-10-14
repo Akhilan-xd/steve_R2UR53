@@ -38,6 +38,7 @@ from geometry_msgs.msg import PointStamped, PoseStamped, Twist
 from rclpy.duration import Duration
 from rclpy.node import Node
 from rclpy.parameter import Parameter
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.time import Time
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
@@ -98,6 +99,13 @@ TABLE_TOP = 0.818
 PLACE_INSET = 0.10
 CUBE_HALF = 0.02
 PLACE_CLEARANCE = 0.015
+# Last phase stays available to a recorder that starts after this node.
+PHASE_QOS = QoSProfile(
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.TRANSIENT_LOCAL,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=1,
+)
 
 
 def _clip(value, limit):
@@ -356,6 +364,8 @@ class Fetch:
         self.node = node
         self.log = node.get_logger()
         self.cmd = node.create_publisher(Twist, "/cmd_vel", 10)
+        self.phase_pub = node.create_publisher(String, "/fetch/phase", PHASE_QOS)
+        self.phase = ""
         self.twist = Twist()
         self.velocity = (0.0, 0.0, 0.0)
         self.sent = (0.0, 0.0, 0.0)
@@ -371,6 +381,16 @@ class Fetch:
             self.table_x + math.sin(TABLE_YAW) * inward,
             self.table_y - math.cos(TABLE_YAW) * inward,
         )
+
+    def mark(self, name):
+        """Publish the step the fetch is in, for a live /odom and joint plot."""
+        if name == self.phase:
+            return
+        self.phase = name
+        msg = String()
+        msg.data = name
+        self.phase_pub.publish(msg)
+        self.log.info(f"Phase: {name}")
 
     # Called from every wait, including MoveIt and gripper waits.
     def tick(self):
@@ -544,15 +564,18 @@ class Fetch:
         self.log.info(f"=== {name} grasp of cube ({cube[0]:.3f}, {cube[1]:.3f}, {cube[2]:.3f}) ===")
         arm.set_pick_scene(*cube, tick=self.tick)
         pregrasp, _ = poses(cube)
+        self.mark("Pregrasp")
         if not arm.move_pose(pregrasp, tick=self.tick, planning_time=5.0):
             self.log.warn(f"No plan to the {name} pregrasp")
             return None
+        self.mark("Remeasure")
         fix = self.measure(timeout=3.0, near=cube)
         if fix is not None:
             self.log.info(
                 f"{self.watch.source} from the pregrasp: cube ({fix[0]:.3f}, {fix[1]:.3f}, {fix[2]:.3f})"
             )
             cube = fix
+        self.mark("Descend")
         for attempt in range(1, RETRIES + 1):
             arm.set_pick_scene(*cube, tick=self.tick, allow_gripper=True)
             pregrasp, grasp = poses(cube)
@@ -572,7 +595,9 @@ class Fetch:
             )
             if miss <= BETWEEN_M:
                 return grasp
+            self.mark("Back off")
             arm.cartesian_to(pregrasp, tick=self.tick)
+            self.mark("Descend")
             cube = tuple(np.asarray(cube) + offset)
             if cube[2] < 0.7:
                 self.log.error(
@@ -588,12 +613,15 @@ class Fetch:
         # Weld first, so the closing fingers do not shove the cube or the base.
         if not arm.grasp_cube(True):
             return False
+        self.mark("Close")
         arm.set_gripper(GRIPPER_CLOSED, tick=self.tick)
         arm.attach_cube()
         lift = copy.deepcopy(grasp)
         lift.pose.position.z += 0.10
+        self.mark("Lift")
         if not arm.cartesian_to(lift, tick=self.tick):
             self.log.warn("Straight lift failed. Folding home with the cube.")
+        self.mark("Fold home")
         for attempt in range(3):
             if arm.move_named("home", tick=self.tick):
                 break
@@ -608,6 +636,7 @@ class Fetch:
         return True
 
     def release_and_recover(self):
+        self.mark("Recover")
         arm = self.arm
         arm.grasp_cube(False)
         arm.set_gripper(GRIPPER_OPEN, speed=GRIPPER_OPEN_SPEED, tick=self.tick)
@@ -675,6 +704,7 @@ class Fetch:
         """Drive to the kitchen table, set the cube on its top, and let go."""
         arm = self.arm
         gx, gy, gz = grasp_xyz
+        self.mark("Drive to table")
         if not self.go_to(self.drop_pose((gx, gy)), "the kitchen table", timeout=150.0):
             self.log.warn("Base stopped short of the kitchen table. Placing from here.")
         if self.base_pose() is None:
@@ -697,23 +727,28 @@ class Fetch:
         above = pose_at("base_link", tcp[0], tcp[1], tcp[2] + PREGRASP, quat, stamp)
         self.log.info(f"Placing the cube at base_link ({px:.3f}, {py:.3f}, {cube_z:.3f})")
 
+        self.mark("Above table")
         if not arm.move_pose(above, tick=self.tick, planning_time=5.0):
             self.log.error("No plan to above the kitchen table")
             return False
         arm.set_place_scene(tx, ty, relative_yaw, size, TABLE_TOP, tick=self.tick, lowered=True)
+        self.mark("Lower")
         if not arm.cartesian_to(place, tick=self.tick):
             self.log.warn("Could not lower all the way. Releasing from just above the table.")
         self.spin(0.5)
 
         # Open while welded, so the pads leave the cube without pushing it.
+        self.mark("Release")
         arm.set_gripper(GRIPPER_OPEN, speed=GRIPPER_OPEN_SPEED, tick=self.tick)
         arm.grasp_cube(False)
         arm.detach_cube(tick=self.tick)
         self.spin(1.0)
 
         landed = self.cube_on_table()
+        self.mark("Retreat")
         arm.cartesian_to(above, tick=self.tick)
         arm.set_place_scene(tx, ty, relative_yaw, size, TABLE_TOP, tick=self.tick)
+        self.mark("Fold home")
         if not arm.move_named("home", tick=self.tick):
             self.hold_home()
         self.spin(1.0)
@@ -756,22 +791,28 @@ class Fetch:
         if start is None:
             self.log.warn("No odom pose, so the base will not drive back after the grasp")
 
+        self.mark("Fold home")
         self.hold_home()
         arm.grasp_cube(False)
         if not arm.set_gripper(GRIPPER_OPEN, speed=GRIPPER_OPEN_SPEED, tick=self.tick):
+            self.mark("Failed")
             return 1
 
+        self.mark("See cube")
         self.log.info("Waiting for the pan or wrist camera to measure the cube")
         seen = self.wait_for_cube()
         if seen is None:
             self.log.error("Neither camera returned a depth pose of the red cube")
+            self.mark("Failed")
             return 1
         self.log.info(f"{self.watch.source} sees the cube at base_link ({seen[0]:.2f}, {seen[1]:.2f}, {seen[2]:.2f})")
 
         for standoff in STANDOFFS:
+            self.mark("Drive to stand" if standoff == STANDOFFS[0] else "Step back")
             if not self.drive_to(standoff):
                 self.log.error("Base did not reach the stand")
                 continue
+            self.mark("Measure")
             cube = self.measure()
             if cube is None:
                 self.log.warn("No still cube pose. Using the last fix.")
@@ -786,6 +827,7 @@ class Fetch:
                 if self.close_and_lift(grasp):
                     self.log.info(f"Cube grasped ({name}). Carrying it back to the start pose.")
                     self.pan.park()
+                    self.mark("Back to start")
                     if start is not None and not self.go_to(start, "the start pose", tolerance=0.05, yaw_tolerance=0.05):
                         self.log.warn("Base did not reach the start pose in time. The cube is still in hand.")
                     position = grasp.pose.position
@@ -793,12 +835,14 @@ class Fetch:
                         self.log.error("=" * 60)
                         self.log.error("TASK FAILED: the cube did not end up on the kitchen table")
                         self.log.error("=" * 60)
+                        self.mark("Failed")
                         return 1
                     self.log.info("=" * 60)
                     self.log.info("TASK COMPLETED SUCCESSFULLY")
                     self.log.info("Picked the red cube from the stand, carried it back,")
                     self.log.info("and placed it on the kitchen table.")
                     self.log.info("=" * 60)
+                    self.mark("Done")
                     return 0
                 self.release_and_recover()
                 refreshed = self.measure(timeout=4.0)
@@ -806,6 +850,7 @@ class Fetch:
                     cube = refreshed
             self.log.warn("Every grasp failed from this spot. Stepping the base back.")
         self.log.error("Could not grasp the cube")
+        self.mark("Failed")
         return 1
 
 

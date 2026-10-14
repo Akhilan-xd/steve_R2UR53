@@ -30,6 +30,8 @@ def generate_launch_description():
     cube_z = LaunchConfiguration("cube_z")
     run_fetch = LaunchConfiguration("run_fetch")
     run_wbc = LaunchConfiguration("run_wbc")
+    record = LaunchConfiguration("record")
+    record_dir = LaunchConfiguration("record_dir")
 
     spawn_script = os.path.join(
         get_package_prefix("gazebo_ros"), "lib", "gazebo_ros", "spawn_entity.py"
@@ -162,6 +164,29 @@ def generate_launch_description():
             return [TimerAction(period=20.0, actions=[fetch])]
         return []
 
+    def start_record(context):
+        if not IfCondition(record).evaluate(context):
+            return []
+        out = record_dir.perform(context)
+        arguments = ["--output", out] if out else []
+        if IfCondition(run_wbc).evaluate(context):
+            arguments += [
+                "--phase-topic",
+                "/wbc/phase",
+                "--title",
+                "Whole-body pick  —  live Gazebo run",
+            ]
+        return [
+            Node(
+                package="steve_manipulation",
+                executable="record_fetch.py",
+                name="record_fetch",
+                output="screen",
+                arguments=arguments,
+                parameters=[{"use_sim_time": ParameterValue(use_sim_time, value_type=bool)}],
+            )
+        ]
+
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -205,6 +230,16 @@ def generate_launch_description():
                 description="Whole-body SQP pick: the base drives to the stand while the arm unfolds to the pregrasp, then the gripper takes the cube",
             ),
             DeclareLaunchArgument(
+                "record",
+                default_value="false",
+                description="Record /odom and arm joint velocities and write a phase graph when the task finishes",
+            ),
+            DeclareLaunchArgument(
+                "record_dir",
+                default_value="",
+                description="Directory for the recorded npz and png. Empty uses the shell's current directory",
+            ),
+            DeclareLaunchArgument(
                 "cube_z",
                 default_value="0.83",
                 description="Cube center z. Stand top is 0.80 m, so 0.83 sits the 40 mm cube on it",
@@ -214,6 +249,7 @@ def generate_launch_description():
             delayed_scene,
             cube_after_stand,
             perception,
+            OpaqueFunction(function=start_record),
             OpaqueFunction(function=start_task),
         ]
     )
